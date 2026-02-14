@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriFlow - Food Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Manrope:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>NutriFlow</h1>
+            <p class="tagline">Your daily nutrition companion</p>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Calories</div>
+                <div class="stat-value">
+                    <span id="totalCalories">0</span>
+                    <span class="stat-unit">kcal</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Protein</div>
+                <div class="stat-value">
+                    <span id="totalProtein">0</span>
+                    <span class="stat-unit">g</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Items Today</div>
+                <div class="stat-value">
+                    <span id="totalItems">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-card">
+            <h2 class="section-title">Add Food</h2>
+            <div class="input-group">
+                <input type="text" id="foodName" placeholder="Food name (e.g., Grilled Chicken)">
+                <input type="number" id="calories" placeholder="Calories" min="0">
+                <input type="number" id="protein" placeholder="Protein (g)" min="0" step="0.1">
+            </div>
+            <button onclick="addFood()">Add to Tracker</button>
+        </div>
+
+        <div class="main-card">
+            <h2 class="section-title">Today's Foods</h2>
+            <ul class="food-list" id="foodList">
+                <li class="empty-state">No foods tracked yet. Start by adding your first meal!</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
