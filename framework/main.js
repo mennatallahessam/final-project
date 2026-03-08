@@ -1,11 +1,12 @@
 const { createApp } = Vue;
 const { createRouter, createWebHashHistory } = VueRouter;
 
-// Import components
+// ==================== App Component ====================
 const App = {
   template: `
     <div>
-      <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
+      <!-- Navbar (show only if authenticated) -->
+      <nav v-if="isAuthenticated" class="navbar is-dark" role="navigation" aria-label="main navigation">
         <div class="navbar-brand">
           <router-link to="/" class="navbar-item is-size-5 has-text-weight-bold">
             <span class="icon-text">
@@ -15,13 +16,7 @@ const App = {
           </router-link>
         </div>
         <div class="navbar-menu">
-          <div class="navbar-end">
-            <router-link to="/" class="navbar-item">
-              <span class="icon-text">
-                <span class="icon"><i class="fas fa-home"></i></span>
-                <span>Home</span>
-              </span>
-            </router-link>
+          <div class="navbar-start">
             <router-link to="/dashboard" class="navbar-item">
               <span class="icon-text">
                 <span class="icon"><i class="fas fa-chart-line"></i></span>
@@ -40,12 +35,19 @@ const App = {
                 <span>Friends</span>
               </span>
             </router-link>
-            <router-link to="/admin" class="navbar-item">
+            <router-link v-if="isAdmin" to="/admin" class="navbar-item">
               <span class="icon-text">
                 <span class="icon"><i class="fas fa-cog"></i></span>
                 <span>Admin</span>
               </span>
             </router-link>
+          </div>
+          <div class="navbar-end">
+            <div class="navbar-item">
+              <span class="is-size-7">
+                Welcome, <strong>{{ currentUser.name }}</strong> ({{ currentUser.role }})
+              </span>
+            </div>
             <div class="navbar-item">
               <button class="button is-danger is-light" @click="logout">
                 <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
@@ -58,15 +60,31 @@ const App = {
       <router-view></router-view>
     </div>
   `,
+  data() {
+    return {
+      store
+    };
+  },
+  computed: {
+    isAuthenticated() {
+      return store.isAuthenticated();
+    },
+    currentUser() {
+      return store.currentUser || {};
+    },
+    isAdmin() {
+      return store.hasRole('admin');
+    }
+  },
   methods: {
     logout() {
-      console.log('Logout clicked');
-      // Will implement in next step
+      store.logout();
+      this.$router.push('/login');
     }
   }
 };
 
-// Home Component
+// ==================== Home Component ====================
 const Home = {
   template: `
     <section class="section">
@@ -93,7 +111,7 @@ const Home = {
   `
 };
 
-// Login Component
+// ==================== Login Component ====================
 const Login = {
   template: `
     <section class="section">
@@ -102,24 +120,58 @@ const Login = {
           <div class="column is-5">
             <div class="box">
               <h1 class="title">Login to FitTrack</h1>
+              
+              <!-- Error Message -->
+              <div v-if="errorMessage" class="notification is-danger is-light">
+                <button class="delete" @click="errorMessage = ''"></button>
+                {{ errorMessage }}
+              </div>
+
+              <!-- Demo Credentials Info -->
+              <div class="notification is-info is-light mb-3">
+                <p><strong>Demo Accounts:</strong></p>
+                <p class="is-size-7">admin / admin123 (Admin role)</p>
+                <p class="is-size-7">john / john123 (User role)</p>
+                <p class="is-size-7">jane / jane123 (User role)</p>
+                <p class="is-size-7">trainer / trainer123 (Trainer role)</p>
+              </div>
+
               <form @submit.prevent="handleLogin">
                 <div class="field">
                   <label class="label">Username</label>
                   <div class="control has-icons-left">
-                    <input class="input" type="text" placeholder="Enter username" v-model="username">
+                    <input 
+                      class="input" 
+                      type="text" 
+                      placeholder="Enter username" 
+                      v-model="username"
+                      :disabled="isLoading"
+                      autofocus
+                    >
                     <span class="icon is-left"><i class="fas fa-user"></i></span>
                   </div>
                 </div>
                 <div class="field">
                   <label class="label">Password</label>
                   <div class="control has-icons-left">
-                    <input class="input" type="password" placeholder="Enter password" v-model="password">
+                    <input 
+                      class="input" 
+                      type="password" 
+                      placeholder="Enter password" 
+                      v-model="password"
+                      :disabled="isLoading"
+                    >
                     <span class="icon is-left"><i class="fas fa-lock"></i></span>
                   </div>
                 </div>
                 <div class="field is-grouped">
                   <div class="control">
-                    <button class="button is-primary">Login</button>
+                    <button class="button is-primary" :loading="isLoading" :disabled="isLoading">
+                      <span v-if="isLoading" class="icon">
+                        <i class="fas fa-spinner fa-spin"></i>
+                      </span>
+                      <span>{{ isLoading ? 'Logging in...' : 'Login' }}</span>
+                    </button>
                   </div>
                 </div>
               </form>
@@ -132,76 +184,154 @@ const Login = {
   data() {
     return {
       username: '',
-      password: ''
+      password: '',
+      errorMessage: '',
+      isLoading: false,
+      store
     };
   },
   methods: {
     handleLogin() {
-      console.log('Login attempt:', this.username);
-      // Will implement authentication in next step
+      this.errorMessage = '';
+      this.isLoading = true;
+
+      // Simulate network delay
+      setTimeout(() => {
+        if (!this.username || !this.password) {
+          this.errorMessage = 'Please enter both username and password';
+          this.isLoading = false;
+          return;
+        }
+
+        const result = store.login(this.username, this.password);
+        
+        if (result.success) {
+          this.$router.push('/dashboard');
+        } else {
+          this.errorMessage = result.error;
+          this.password = '';
+        }
+        
+        this.isLoading = false;
+      }, 500);
     }
   }
 };
 
-// Placeholder Components
+// ==================== Dashboard Component (Placeholder) ====================
 const Dashboard = {
   template: `
     <section class="section">
       <div class="container">
         <h1 class="title">Dashboard</h1>
-        <p class="subtitle">Your personal fitness overview (coming soon)</p>
+        <p class="subtitle">Your personal fitness overview</p>
+        <div class="box">
+          <p>Dashboard content coming soon...</p>
+        </div>
       </div>
     </section>
   `
 };
 
+// ==================== Activities Component (Placeholder) ====================
 const Activities = {
   template: `
     <section class="section">
       <div class="container">
         <h1 class="title">Activities</h1>
-        <p class="subtitle">Manage your fitness activities (coming soon)</p>
+        <p class="subtitle">Manage your fitness activities</p>
+        <div class="box">
+          <p>Activities management coming soon...</p>
+        </div>
       </div>
     </section>
   `
 };
 
+// ==================== Friends Component (Placeholder) ====================
 const Friends = {
   template: `
     <section class="section">
       <div class="container">
         <h1 class="title">Friends</h1>
-        <p class="subtitle">View your friends' activities (coming soon)</p>
+        <p class="subtitle">View your friends' activities</p>
+        <div class="box">
+          <p>Friends area coming soon...</p>
+        </div>
       </div>
     </section>
   `
 };
 
+// ==================== Admin Component (Placeholder) ====================
 const Admin = {
   template: `
     <section class="section">
       <div class="container">
         <h1 class="title">Admin Panel</h1>
-        <p class="subtitle">Manage users and system settings (coming soon)</p>
+        <p class="subtitle">Manage users and system settings</p>
+        <div class="box">
+          <p>Admin panel coming soon...</p>
+        </div>
       </div>
     </section>
   `
 };
 
-// Router configuration
+// ==================== Router Configuration ====================
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
-    { path: '/', component: Home },
     { path: '/login', component: Login },
-    { path: '/dashboard', component: Dashboard },
-    { path: '/activities', component: Activities },
-    { path: '/friends', component: Friends },
-    { path: '/admin', component: Admin }
+    { 
+      path: '/', 
+      component: Home,
+      meta: { requiresAuth: true }
+    },
+    { 
+      path: '/dashboard', 
+      component: Dashboard,
+      meta: { requiresAuth: true }
+    },
+    { 
+      path: '/activities', 
+      component: Activities,
+      meta: { requiresAuth: true }
+    },
+    { 
+      path: '/friends', 
+      component: Friends,
+      meta: { requiresAuth: true }
+    },
+    { 
+      path: '/admin', 
+      component: Admin,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    }
   ]
 });
 
-// Create and mount app
+// ==================== Route Guards ====================
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = store.isAuthenticated();
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin);
+
+  if (requiresAuth && !isAuthenticated) {
+    // Redirect to login if trying to access protected route
+    next('/login');
+  } else if (requiresAdmin && !store.hasRole('admin')) {
+    // Redirect to dashboard if admin tries to access admin route without permission
+    next('/dashboard');
+  } else if (to.path === '/login' && isAuthenticated) {
+    // Redirect to dashboard if already logged in and visiting login
+    next('/dashboard');
+  } else {
+    next();
+  }
+});
+
+// ==================== App Creation ====================
 const app = createApp(App);
 app.use(router);
 app.mount('#app');
