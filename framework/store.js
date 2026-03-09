@@ -100,6 +100,53 @@ const store = {
     return { success: false, error: 'Invalid username or password' };
   },
 
+  register(username, password, name, email) {
+    // Validate inputs
+    if (!username || !password || !name || !email) {
+      return { success: false, error: 'All fields are required' };
+    }
+
+    if (username.length < 3) {
+      return { success: false, error: 'Username must be at least 3 characters' };
+    }
+
+    if (password.length < 6) {
+      return { success: false, error: 'Password must be at least 6 characters' };
+    }
+
+    // Check if username already exists
+    if (this.users.find(u => u.username === username)) {
+      return { success: false, error: 'Username already taken' };
+    }
+
+    // Check if email already exists
+    if (this.users.find(u => u.email === email)) {
+      return { success: false, error: 'Email already registered' };
+    }
+
+    // Create new user
+    const newId = Math.max(...this.users.map(u => u.id), 0) + 1;
+    const newUser = {
+      id: newId,
+      username,
+      password,
+      name,
+      email,
+      role: 'user',
+      createdAt: new Date(),
+      friends: []
+    };
+
+    this.users.push(newUser);
+
+    // Auto-login after registration
+    this.currentUser = { ...newUser };
+    delete this.currentUser.password;
+    localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+
+    return { success: true, user: this.currentUser };
+  },
+
   logout() {
     this.currentUser = null;
     localStorage.removeItem('currentUser');

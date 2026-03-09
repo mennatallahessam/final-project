@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
+const router = useRouter()
+
+const logout = () => {
+  authStore.logout()
+  router.push('/login')
+}
 </script>
 
 <template>
@@ -21,22 +30,28 @@ import { RouterLink } from 'vue-router'
             <span>Home</span>
           </span>
         </RouterLink>
-        <RouterLink to="/dashboard" class="navbar-item" active-class="is-active">
+        <RouterLink v-if="authStore.isLoggedIn" to="/dashboard" class="navbar-item" active-class="is-active">
           <span class="icon-text">
             <span class="icon"><i class="fas fa-chart-line"></i></span>
             <span>Dashboard</span>
           </span>
         </RouterLink>
-        <RouterLink to="/activities" class="navbar-item" active-class="is-active">
+        <RouterLink v-if="authStore.isLoggedIn" to="/activities" class="navbar-item" active-class="is-active">
           <span class="icon-text">
             <span class="icon"><i class="fas fa-list"></i></span>
             <span>Activities</span>
           </span>
         </RouterLink>
-        <RouterLink to="/friends" class="navbar-item" active-class="is-active">
+        <RouterLink v-if="authStore.isLoggedIn" to="/friends" class="navbar-item" active-class="is-active">
           <span class="icon-text">
             <span class="icon"><i class="fas fa-users"></i></span>
             <span>Friends</span>
+          </span>
+        </RouterLink>
+        <RouterLink v-if="authStore.isLoggedIn && authStore.currentUser?.role === 'admin'" to="/admin" class="navbar-item" active-class="is-active">
+          <span class="icon-text">
+            <span class="icon"><i class="fas fa-cog"></i></span>
+            <span>Admin</span>
           </span>
         </RouterLink>
       </div>
@@ -44,9 +59,33 @@ import { RouterLink } from 'vue-router'
       <div class="navbar-end">
         <div class="navbar-item">
           <div class="buttons">
-            <RouterLink to="/login" class="button is-primary">
-              <strong>Login</strong>
-            </RouterLink>
+            <template v-if="authStore.isLoggedIn">
+              <div class="navbar-item has-dropdown is-hoverable">
+                <a class="navbar-link">
+                  <span class="icon-text">
+                    <span class="icon"><i class="fas fa-user-circle"></i></span>
+                    <span>{{ authStore.currentUser?.fullName }}</span>
+                  </span>
+                </a>
+                <div class="navbar-dropdown is-right">
+                  <a class="navbar-item">
+                    <span>@{{ authStore.currentUser?.username }}</span>
+                  </a>
+                  <hr class="navbar-divider" />
+                  <a class="navbar-item" @click="logout">
+                    <span class="has-text-danger">Logout</span>
+                  </a>
+                </div>
+              </div>
+            </template>
+            <template v-else>
+              <RouterLink to="/login" class="button is-primary">
+                <strong>Login</strong>
+              </RouterLink>
+              <RouterLink to="/register" class="button is-light">
+                Sign Up
+              </RouterLink>
+            </template>
           </div>
         </div>
       </div>

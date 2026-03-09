@@ -174,6 +174,14 @@ const Login = {
                   </div>
                 </div>
               </form>
+
+              <hr>
+
+              <div class="has-text-centered">
+                <p>Don't have an account? 
+                  <router-link to="/register">Register here</router-link>
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -211,6 +219,154 @@ const Login = {
           this.password = '';
         }
         
+        this.isLoading = false;
+      }, 500);
+    }
+  }
+};
+
+// ==================== Register Component ====================
+const Register = {
+  template: `
+    <section class="section">
+      <div class="container">
+        <div class="columns is-centered">
+          <div class="column is-5">
+            <div class="box">
+              <h1 class="title">Create Account</h1>
+              
+              <!-- Error Message -->
+              <div v-if="errorMessage" class="notification is-danger is-light">
+                <button class="delete" @click="errorMessage = ''"></button>
+                {{ errorMessage }}
+              </div>
+
+              <!-- Success Message -->
+              <div v-if="successMessage" class="notification is-success is-light">
+                <button class="delete" @click="successMessage = ''"></button>
+                {{ successMessage }}
+              </div>
+
+              <form @submit.prevent="handleRegister">
+                <div class="field">
+                  <label class="label">Full Name</label>
+                  <div class="control has-icons-left">
+                    <input 
+                      class="input" 
+                      type="text" 
+                      placeholder="Enter your full name" 
+                      v-model="formData.name"
+                      :disabled="isLoading"
+                    >
+                    <span class="icon is-left"><i class="fas fa-user"></i></span>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label class="label">Email</label>
+                  <div class="control has-icons-left">
+                    <input 
+                      class="input" 
+                      type="email" 
+                      placeholder="Enter your email" 
+                      v-model="formData.email"
+                      :disabled="isLoading"
+                    >
+                    <span class="icon is-left"><i class="fas fa-envelope"></i></span>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label class="label">Username</label>
+                  <div class="control has-icons-left">
+                    <input 
+                      class="input" 
+                      type="text" 
+                      placeholder="Choose a username (min 3 chars)" 
+                      v-model="formData.username"
+                      :disabled="isLoading"
+                    >
+                    <span class="icon is-left"><i class="fas fa-at"></i></span>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label class="label">Password</label>
+                  <div class="control has-icons-left">
+                    <input 
+                      class="input" 
+                      type="password" 
+                      placeholder="Create a password (min 6 chars)" 
+                      v-model="formData.password"
+                      :disabled="isLoading"
+                    >
+                    <span class="icon is-left"><i class="fas fa-lock"></i></span>
+                  </div>
+                </div>
+
+                <div class="field is-grouped">
+                  <div class="control">
+                    <button class="button is-primary" :loading="isLoading" :disabled="isLoading">
+                      <span v-if="isLoading" class="icon">
+                        <i class="fas fa-spinner fa-spin"></i>
+                      </span>
+                      <span>{{ isLoading ? 'Creating Account...' : 'Register' }}</span>
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              <hr>
+
+              <div class="has-text-centered">
+                <p>Already have an account? 
+                  <router-link to="/login">Login here</router-link>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  `,
+  data() {
+    return {
+      formData: {
+        name: '',
+        email: '',
+        username: '',
+        password: ''
+      },
+      errorMessage: '',
+      successMessage: '',
+      isLoading: false,
+      store
+    };
+  },
+  methods: {
+    handleRegister() {
+      this.errorMessage = '';
+      this.successMessage = '';
+      this.isLoading = true;
+
+      // Simulate network delay
+      setTimeout(() => {
+        const result = store.register(
+          this.formData.username,
+          this.formData.password,
+          this.formData.name,
+          this.formData.email
+        );
+
+        if (result.success) {
+          this.successMessage = 'Account created! Redirecting to dashboard...';
+          setTimeout(() => {
+            this.$router.push('/dashboard');
+          }, 1500);
+        } else {
+          this.errorMessage = result.error;
+        }
+
         this.isLoading = false;
       }, 500);
     }
