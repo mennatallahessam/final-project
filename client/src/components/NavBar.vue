@@ -13,79 +13,81 @@ const logout = () => {
 
 <template>
   <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
-    <div class="navbar-brand">
-      <RouterLink to="/" class="navbar-item is-size-5 has-text-weight-bold">
-        <span class="icon-text">
-          <span class="icon"><i class="fas fa-dumbbell"></i></span>
-          <span>FitTrack</span>
-        </span>
-      </RouterLink>
-    </div>
-
-    <div class="navbar-menu">
-      <div class="navbar-start">
-        <RouterLink to="/" class="navbar-item" active-class="is-active">
+    <div class="container">
+      <div class="navbar-brand">
+        <RouterLink to="/" class="navbar-item is-size-5 has-text-weight-bold">
+          <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="25" height="25" style="margin-right: 0.5rem" />
           <span class="icon-text">
-            <span class="icon"><i class="fas fa-home"></i></span>
-            <span>Home</span>
-          </span>
-        </RouterLink>
-        <RouterLink v-if="authStore.isLoggedIn" to="/dashboard" class="navbar-item" active-class="is-active">
-          <span class="icon-text">
-            <span class="icon"><i class="fas fa-chart-line"></i></span>
-            <span>Dashboard</span>
-          </span>
-        </RouterLink>
-        <RouterLink v-if="authStore.isLoggedIn" to="/activities" class="navbar-item" active-class="is-active">
-          <span class="icon-text">
-            <span class="icon"><i class="fas fa-list"></i></span>
-            <span>Activities</span>
-          </span>
-        </RouterLink>
-        <RouterLink v-if="authStore.isLoggedIn" to="/friends" class="navbar-item" active-class="is-active">
-          <span class="icon-text">
-            <span class="icon"><i class="fas fa-users"></i></span>
-            <span>Friends</span>
-          </span>
-        </RouterLink>
-        <RouterLink v-if="authStore.isLoggedIn && authStore.currentUser?.role === 'admin'" to="/admin" class="navbar-item" active-class="is-active">
-          <span class="icon-text">
-            <span class="icon"><i class="fas fa-cog"></i></span>
-            <span>Admin</span>
+            <span>FitTrack</span>
           </span>
         </RouterLink>
       </div>
 
-      <div class="navbar-end">
-        <div class="navbar-item">
-          <div class="buttons">
-            <template v-if="authStore.isLoggedIn">
-              <div class="navbar-item has-dropdown is-hoverable">
-                <a class="navbar-link">
-                  <span class="icon-text">
-                    <span class="icon"><i class="fas fa-user-circle"></i></span>
-                    <span>{{ authStore.currentUser?.fullName }}</span>
-                  </span>
-                </a>
-                <div class="navbar-dropdown is-right">
-                  <a class="navbar-item">
-                    <span>@{{ authStore.currentUser?.username }}</span>
+      <div class="navbar-menu">
+        <div class="navbar-start">
+          <RouterLink to="/" class="navbar-item" active-class="is-active">
+            <span class="icon-text">
+              <span class="icon"><i class="fas fa-home"></i></span>
+              <span>Home</span>
+            </span>
+          </RouterLink>
+          <RouterLink v-if="authStore.isLoggedIn" to="/dashboard" class="navbar-item" active-class="is-active">
+            <span class="icon-text">
+              <span class="icon"><i class="fas fa-chart-line"></i></span>
+              <span>Dashboard</span>
+            </span>
+          </RouterLink>
+          <RouterLink v-if="authStore.isLoggedIn" to="/activities" class="navbar-item" active-class="is-active">
+            <span class="icon-text">
+              <span class="icon"><i class="fas fa-list"></i></span>
+              <span>Activities</span>
+            </span>
+          </RouterLink>
+          <RouterLink v-if="authStore.isLoggedIn" to="/friends" class="navbar-item" active-class="is-active">
+            <span class="icon-text">
+              <span class="icon"><i class="fas fa-users"></i></span>
+              <span>Friends</span>
+            </span>
+          </RouterLink>
+          <RouterLink v-if="authStore.isLoggedIn && authStore.currentUser?.role === 'admin'" to="/admin" class="navbar-item" active-class="is-active">
+            <span class="icon-text">
+              <span class="icon"><i class="fas fa-cog"></i></span>
+              <span>Admin</span>
+            </span>
+          </RouterLink>
+        </div>
+
+        <div class="navbar-end">
+          <div class="navbar-item">
+            <div class="buttons">
+              <template v-if="authStore.isLoggedIn">
+                <div class="navbar-item has-dropdown is-hoverable">
+                  <a class="navbar-link">
+                    <span class="icon-text">
+                      <span class="icon"><i class="fas fa-user-circle"></i></span>
+                      <span>{{ authStore.currentUser?.fullName }}</span>
+                    </span>
                   </a>
-                  <hr class="navbar-divider" />
-                  <a class="navbar-item" @click="logout">
-                    <span class="has-text-danger">Logout</span>
-                  </a>
+                  <div class="navbar-dropdown is-right">
+                    <a class="navbar-item">
+                      <span>@{{ authStore.currentUser?.username }}</span>
+                    </a>
+                    <hr class="navbar-divider" />
+                    <a class="navbar-item" @click="logout">
+                      <span class="has-text-danger">Logout</span>
+                    </a>
+                  </div>
                 </div>
-              </div>
-            </template>
-            <template v-else>
-              <RouterLink to="/login" class="button is-primary">
-                <strong>Login</strong>
-              </RouterLink>
-              <RouterLink to="/register" class="button is-light">
-                Sign Up
-              </RouterLink>
-            </template>
+              </template>
+              <template v-else>
+                <RouterLink to="/login" class="button is-primary">
+                  <strong>Login</strong>
+                </RouterLink>
+                <RouterLink to="/register" class="button is-light">
+                  Sign Up
+                </RouterLink>
+              </template>
+            </div>
           </div>
         </div>
       </div>

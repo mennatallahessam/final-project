@@ -53,4 +53,22 @@ const router = createRouter({
   ],
 })
 
+import { useAuthStore } from '../stores/auth'
+
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore()
+  const publicPages = ['/', '/login', '/register', '/about']
+  const authRequired = !publicPages.includes(to.path)
+
+  if (authRequired && !authStore.isLoggedIn) {
+    return next('/login')
+  }
+
+  if (to.path === '/admin' && !authStore.isAdmin) {
+    return next('/')
+  }
+
+  next()
+})
+
 export default router

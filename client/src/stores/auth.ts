@@ -1,48 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-
-interface User {
-  id: number
-  username: string
-  email: string
-  fullName: string
-  password: string
-  role: 'admin' | 'user' | 'trainer'
-}
+import { useUsersStore, type User } from './users'
 
 export const useAuthStore = defineStore('auth', () => {
+  const usersStore = useUsersStore()
   const currentUser = ref<User | null>(null)
-  const users = ref<User[]>([
-    {
-      id: 1,
-      username: 'admin',
-      email: 'admin@fitness.com',
-      fullName: 'Admin User',
-      password: 'admin123',
-      role: 'admin'
-    },
-    {
-      id: 2,
-      username: 'john',
-      email: 'john@fitness.com',
-      fullName: 'John Doe',
-      password: 'john123',
-      role: 'user'
-    },
-    {
-      id: 3,
-      username: 'jane',
-      email: 'jane@fitness.com',
-      fullName: 'Jane Smith',
-      password: 'jane123',
-      role: 'trainer'
-    }
-  ])
 
   const isLoggedIn = computed(() => currentUser.value !== null)
+  const isAdmin = computed(() => currentUser.value?.role === 'admin')
 
-  const login = (username: string, password: string) => {
-    const user = users.value.find(u => u.username === username && u.password === password)
+  const login = (username: string, password?: string) => {
+    const user = usersStore.users.find(u => u.username === username && u.password === password)
     if (user) {
       currentUser.value = user
       return { success: true, message: 'Login successful' }
@@ -50,7 +18,7 @@ export const useAuthStore = defineStore('auth', () => {
     return { success: false, message: 'Invalid username or password' }
   }
 
-  const register = (username: string, email: string, fullName: string, password: string) => {
+  const register = (username: string, email: string, fullName: string, password?: string) => {
     if (!username || !email || !fullName || !password) {
       return { success: false, message: 'All fields are required' }
     }
@@ -60,23 +28,28 @@ export const useAuthStore = defineStore('auth', () => {
     if (password.length < 6) {
       return { success: false, message: 'Password must be at least 6 characters' }
     }
-    if (users.value.some(u => u.username === username)) {
+    if (usersStore.users.some(u => u.username === username)) {
       return { success: false, message: 'Username already exists' }
     }
-    if (users.value.some(u => u.email === email)) {
+    if (usersStore.users.some(u => u.email === email)) {
       return { success: false, message: 'Email already exists' }
     }
 
-    const newUser: User = {
-      id: Math.max(...users.value.map(u => u.id), 0) + 1,
+    const newUserBase = {
       username,
       email,
       fullName,
       password,
-      role: 'user'
+      role: 'user' as const,
+      friends: [],
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`
     }
-    users.value.push(newUser)
-    currentUser.value = newUser
+    
+    const newId = usersStore.addUser(newUserBase)
+    const newUser = usersStore.getUserById(newId)
+    if (newUser) {
+      currentUser.value = newUser
+    }
     return { success: true, message: 'Account created successfully' }
   }
 
@@ -86,8 +59,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     currentUser,
-    users,
     isLoggedIn,
+    isAdmin,
     login,
     register,
     logout
