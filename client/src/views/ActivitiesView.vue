@@ -13,7 +13,7 @@ const emptyForm = {
   type: '',
   duration: 0,
   distance: 0,
-  date: new Date().toISOString().split('T')[0],
+  date: new Date().toISOString().split('T')[0] as string,
   calories: 0,
   notes: ''
 }
@@ -34,7 +34,14 @@ const openAddModal = () => {
 }
 
 const openEditModal = (activity: Activity) => {
-  form.value = { ...activity }
+  form.value = {
+    type: activity.type,
+    duration: activity.duration,
+    distance: activity.distance || 0,
+    date: activity.date,
+    calories: activity.calories,
+    notes: activity.notes || ''
+  }
   isEditing.value = true
   editingId.value = activity.id
   isModalActive.value = true
@@ -47,13 +54,18 @@ const closeModal = () => {
 const saveActivity = () => {
   if (!authStore.currentUser) return
 
+  const payload = {
+    ...form.value,
+    date: form.value.date || new Date().toISOString().split('T')[0]
+  }
+
   if (isEditing.value && editingId.value) {
-    activitiesStore.updateActivity(editingId.value, { ...form.value })
+    activitiesStore.updateActivity(editingId.value, payload)
   } else {
     activitiesStore.addActivity({
-      ...form.value,
+      ...payload,
       userId: authStore.currentUser.id
-    })
+    } as Omit<Activity, 'id'>)
   }
   closeModal()
 }
