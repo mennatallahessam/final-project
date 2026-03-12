@@ -6,6 +6,7 @@ import DashboardView from '../views/DashboardView.vue'
 import ActivitiesView from '../views/ActivitiesView.vue'
 import FriendsView from '../views/FriendsView.vue'
 import AdminView from '../views/AdminView.vue'
+import StatisticsView from '../views/StatisticsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -39,6 +40,11 @@ const router = createRouter({
       path: '/friends',
       name: 'friends',
       component: FriendsView,
+    },
+    {
+      path: '/statistics',
+      name: 'statistics',
+      component: StatisticsView,
     },
     {
       path: '/admin',
