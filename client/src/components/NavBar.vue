@@ -16,10 +16,12 @@ const logout = () => {
     <div class="container">
       <div class="navbar-brand">
         <RouterLink to="/" class="navbar-item is-size-5 has-text-weight-bold">
-          <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="25" height="25" style="margin-right: 0.5rem" />
-          <span class="icon-text">
-            <span>FitTrack</span>
+          <span class="gym-icons">
+            <i class="fas fa-dumbbell"></i>
+            <i class="fas fa-heartbeat"></i>
+            <i class="fas fa-running"></i>
           </span>
+          <span class="ml-2">FitTrack</span>
         </RouterLink>
       </div>
 
@@ -116,4 +118,21 @@ const logout = () => {
   align-items: center;
   gap: 0.5rem;
 }
+
+.gym-icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1rem;
+  color: #41b883;
+}
+
+.gym-icons i:nth-child(2) {
+  color: #ff6b6b;
+}
+
+.gym-icons i:nth-child(3) {
+  color: #48c774;
+}
+
 </style>
