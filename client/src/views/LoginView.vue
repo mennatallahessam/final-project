@@ -89,13 +89,13 @@ const demoLogin = (user: string, pass: string) => {
             </p>
             <div class="buttons is-centered">
               <button class="button is-small is-light" @click="demoLogin('admin', 'admin123')">
-                Admin
+                Admin (admin / admin123)
               </button>
               <button class="button is-small is-light" @click="demoLogin('john', 'john123')">
-                John
+                John (john / john123)
               </button>
               <button class="button is-small is-light" @click="demoLogin('jane', 'jane123')">
-                Jane
+                Jane (jane / jane123)
               </button>
             </div>
           </div>

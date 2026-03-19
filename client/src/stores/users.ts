@@ -3,7 +3,8 @@ import { defineStore } from 'pinia'
 
 export type Role = 'admin' | 'user' | 'trainer'
 
-export interface User {
+export interface User 
+{
   id: number
   username: string
   email: string
@@ -14,7 +15,8 @@ export interface User {
   avatar: string
 }
 
-export const useUsersStore = defineStore('users', () => {
+export const useUsersStore = defineStore('users', () => 
+  {
   const users = ref<User[]>([
     {
       id: 1,
