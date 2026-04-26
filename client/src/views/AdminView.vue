@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useUsersStore, type User, type Role } from '@/stores/users'
 
@@ -8,7 +8,7 @@ const usersStore = useUsersStore()
 
 const isModalActive = ref(false)
 const isEditing = ref(false)
-const editingId = ref<number | null>(null)
+const editingId = ref<string | null>(null)
 
 const emptyForm = {
   username: '',
@@ -22,6 +22,12 @@ const form = ref({ ...emptyForm })
 
 const allUsers = computed(() => usersStore.users)
 
+onMounted(() => {
+  if (authStore.isAdmin) {
+    usersStore.fetchAllUsers()
+  }
+})
+
 const openAddModal = () => {
   form.value = { ...emptyForm }
   isEditing.value = false
@@ -34,11 +40,11 @@ const openEditModal = (user: User) => {
     username: user.username,
     email: user.email,
     fullName: user.fullName,
-    password: user.password || '',
+    password: '',
     role: user.role
   }
   isEditing.value = true
-  editingId.value = user.id
+  editingId.value = user._id
   isModalActive.value = true
 }
 
@@ -46,11 +52,13 @@ const closeModal = () => {
   isModalActive.value = false
 }
 
-const saveUser = () => {
+const saveUser = async () => {
   if (isEditing.value && editingId.value) {
-    usersStore.updateUser(editingId.value, { ...form.value })
+    const updates: any = { ...form.value }
+    if (!updates.password) delete updates.password
+    await usersStore.updateUser(editingId.value, updates)
   } else {
-    usersStore.addUser({
+    await usersStore.addUser({
       ...form.value,
       friends: [],
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(form.value.fullName)}&background=random`
@@ -59,13 +67,13 @@ const saveUser = () => {
   closeModal()
 }
 
-const deleteUser = (id: number) => {
-  if (id === authStore.currentUser?.id) {
+const deleteUser = async (id: string) => {
+  if (id === authStore.currentUser?._id) {
     alert("You cannot delete yourself.")
     return
   }
   if (confirm('Are you sure you want to delete this user? This cannot be undone.')) {
-    usersStore.deleteUser(id)
+    await usersStore.deleteUser(id)
   }
 }
 </script>
@@ -104,8 +112,8 @@ const deleteUser = (id: number) => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="user in allUsers" :key="user.id">
-            <td>{{ user.id }}</td>
+          <tr v-for="user in allUsers" :key="user._id">
+            <td><small class="has-text-grey">{{ user._id.substring(0, 8) }}...</small></td>
             <td>
               <div class="is-flex is-align-items-center">
                 <figure class="image is-32x32 mr-2">
@@ -128,9 +136,9 @@ const deleteUser = (id: number) => {
                 </button>
                 <button 
                   class="button is-danger is-light" 
-                  @click="deleteUser(user.id)" 
+                  @click="deleteUser(user._id)" 
                   title="Delete"
-                  :disabled="user.id === authStore.currentUser?.id"
+                  :disabled="user._id === authStore.currentUser?._id"
                 >
                   <span class="icon"><i class="fas fa-trash"></i></span>
                 </button>

@@ -1,0 +1,14 @@
+{
+  "name": "fittrack-root",
+  "version": "1.0.0",
+  "scripts": {
+    "install:all": "npm install --prefix client && npm install --prefix server",
+    "build:client": "npm run build --prefix client",
+    "start": "node server/index.js",
+    "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
+    "build": "npm run build:client"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

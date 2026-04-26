@@ -1,11 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useAuthStore } from './auth'
+import { apiFetch, type ApiResponse } from '../api/session'
 
 export interface Activity {
-  id: number
-  userId: number
-  type: string
+  _id: string
+  userId: string | any
+  exerciseTypeId: string | any
+  type?: string // Legacy or display name
   duration: number // in minutes
   distance: number // in km
   date: string
@@ -14,97 +16,81 @@ export interface Activity {
 }
 
 export const useActivitiesStore = defineStore('activities', () => {
-  const activities = ref<Activity[]>([
-    {
-      id: 1,
-      userId: 2, // John Doe
-      type: 'Running',
-      duration: 30,
-      distance: 5,
-      date: new Date().toISOString().split('T')[0] as string, // Today
-      calories: 350
-    },
-    {
-      id: 2,
-      userId: 2,
-      type: 'Cycling',
-      duration: 45,
-      distance: 15,
-      date: new Date().toISOString().split('T')[0] as string, // Today
-      calories: 400
-    },
-    {
-      id: 3,
-      userId: 3, // Jane Smith
-      type: 'Yoga',
-      duration: 60,
-      distance: 0,
-      date: new Date(Date.now() - 86400000 * 3).toISOString().split('T')[0] as string, // 3 days ago
-      calories: 200
-    },
-    {
-      id: 4,
-      userId: 2,
-      type: 'Walking',
-      duration: 40,
-      distance: 3,
-      date: new Date(Date.now() - 86400000 * 5).toISOString().split('T')[0] as string, // 5 days ago
-      calories: 180
-    }
-  ])
+  const activities = ref<Activity[]>([])
+  const loading = ref(false)
 
   // ── Time-filtered getters (Extra Credit Statistics) ──────────────────────
   const todayActivities = computed(() => {
     const authStore = useAuthStore()
     if (!authStore.currentUser) return []
-    const todayStr = new Date().toISOString().split('T')[0]
+    const todayStr = new Date().toISOString().split('T')[0] || ''
     return activities.value.filter(
-      a => a.userId === authStore.currentUser!.id && a.date === todayStr
+      a => a.date.startsWith(todayStr)
     )
   })
 
+  // ... (Other computed stays similar but filtered by date/user if not already filtered by API)
+  
   const thisWeekActivities = computed(() => {
-    const authStore = useAuthStore()
-    if (!authStore.currentUser) return []
-    const sevenDaysAgo = new Date(Date.now() - 86400000 * 7).toISOString().split('T')[0] ?? ''
+    const sevenDaysAgo = new Date(Date.now() - 86400000 * 7).toISOString().split('T')[0] || ''
     return activities.value.filter(
-      a => a.userId === authStore.currentUser!.id && a.date >= sevenDaysAgo
+      a => a.date >= sevenDaysAgo
     )
   })
 
   const allTimeActivities = computed(() => {
-    const authStore = useAuthStore()
-    if (!authStore.currentUser) return []
-    return activities.value.filter(a => a.userId === authStore.currentUser!.id)
+    return activities.value
   })
 
-  // ── CRUD ──────────────────────────────────────────────────────────────────
-  function getActivitiesByUser(userId: number) {
-    return activities.value.filter(a => a.userId === userId)
-  }
-
-  function addActivity(activity: Omit<Activity, 'id'>) {
-    const newId = Math.max(...activities.value.map(a => a.id), 0) + 1
-    activities.value.push({ ...activity, id: newId })
-  }
-
-  function updateActivity(id: number, updates: Partial<Activity>) {
-    const index = activities.value.findIndex(a => a.id === id)
-    if (index !== -1) {
-      activities.value[index] = { ...activities.value[index], ...updates } as Activity
+  async function fetchMyActivities() {
+    loading.value = true
+    try {
+      const response = await apiFetch<ApiResponse<Activity[]>>('/activities/me')
+      activities.value = response.data || []
+    } finally {
+      loading.value = false
     }
   }
 
-  function deleteActivity(id: number) {
-    activities.value = activities.value.filter(a => a.id !== id)
+  async function fetchUserActivities(userId: string) {
+    const response = await apiFetch<ApiResponse<Activity[]>>(`/activities/user/${userId}`)
+    return response.data || []
+  }
+
+  async function addActivity(activity: Omit<Activity, '_id'>) {
+    const response = await apiFetch<ApiResponse<Activity>>('/activities', {
+      method: 'POST',
+      body: JSON.stringify(activity)
+    })
+    if (response.data) {
+      activities.value.push(response.data)
+    }
+  }
+
+  async function updateActivity(id: string, updates: Partial<Activity>) {
+    const response = await apiFetch<ApiResponse<Activity>>(`/activities/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates)
+    })
+    const index = activities.value.findIndex(a => a._id === id)
+    if (index !== -1 && response.data) {
+      activities.value[index] = response.data
+    }
+  }
+
+  async function deleteActivity(id: string) {
+    await apiFetch(`/activities/${id}`, { method: 'DELETE' })
+    activities.value = activities.value.filter(a => a._id !== id)
   }
 
   return {
     activities,
+    loading,
     todayActivities,
     thisWeekActivities,
     allTimeActivities,
-    getActivitiesByUser,
+    fetchMyActivities,
+    fetchUserActivities,
     addActivity,
     updateActivity,
     deleteActivity

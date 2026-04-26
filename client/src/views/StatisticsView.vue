@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useActivitiesStore, formatDistance, formatDuration, formatPace, sumStat, type Activity } from '@/stores/activities'
 
 const store = useActivitiesStore()
+
+onMounted(() => {
+  store.fetchMyActivities()
+})
 
 interface StatGroup {
   title: string

@@ -1,29 +1,35 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useActivitiesStore, type Activity } from '@/stores/activities'
+import { useExerciseTypeStore } from '@/stores/exerciseTypes'
 
 const authStore = useAuthStore()
 const activitiesStore = useActivitiesStore()
+const exerciseTypeStore = useExerciseTypeStore()
 
 const isModalActive = ref(false)
 const isEditing = ref(false)
 
 const emptyForm = {
-  type: '',
+  exerciseTypeId: '',
   duration: 0,
   distance: 0,
-  date: new Date().toISOString().split('T')[0] as string,
+  date: new Date().toISOString().split('T')[0] || '',
   calories: 0,
   notes: ''
 }
 
 const form = ref({ ...emptyForm })
-const editingId = ref<number | null>(null)
+const editingId = ref<string | null>(null)
 
 const userActivities = computed(() => {
-  if (!authStore.currentUser) return []
-  return activitiesStore.getActivitiesByUser(authStore.currentUser.id).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  return activitiesStore.activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+})
+
+onMounted(async () => {
+  await activitiesStore.fetchMyActivities()
+  await exerciseTypeStore.fetchAllExerciseTypes()
 })
 
 const openAddModal = () => {
@@ -35,15 +41,15 @@ const openAddModal = () => {
 
 const openEditModal = (activity: Activity) => {
   form.value = {
-    type: activity.type,
+    exerciseTypeId: typeof activity.exerciseTypeId === 'string' ? activity.exerciseTypeId : activity.exerciseTypeId._id,
     duration: activity.duration,
     distance: activity.distance || 0,
-    date: activity.date,
+    date: activity.date.split('T')[0] || '',
     calories: activity.calories,
     notes: activity.notes || ''
   }
   isEditing.value = true
-  editingId.value = activity.id
+  editingId.value = activity._id
   isModalActive.value = true
 }
 
@@ -51,7 +57,7 @@ const closeModal = () => {
   isModalActive.value = false
 }
 
-const saveActivity = () => {
+const saveActivity = async () => {
   if (!authStore.currentUser) return
 
   const payload = {
@@ -60,19 +66,16 @@ const saveActivity = () => {
   }
 
   if (isEditing.value && editingId.value) {
-    activitiesStore.updateActivity(editingId.value, payload)
+    await activitiesStore.updateActivity(editingId.value, payload as any)
   } else {
-    activitiesStore.addActivity({
-      ...payload,
-      userId: authStore.currentUser.id
-    } as Omit<Activity, 'id'>)
+    await activitiesStore.addActivity(payload as any)
   }
   closeModal()
 }
 
-const deleteActivity = (id: number) => {
+const deleteActivity = async (id: string) => {
   if (confirm('Are you sure you want to delete this activity?')) {
-    activitiesStore.deleteActivity(id)
+    await activitiesStore.deleteActivity(id)
   }
 }
 </script>
@@ -97,6 +100,9 @@ const deleteActivity = (id: number) => {
     <div class="table-container">
       <table class="table is-fullwidth is-hoverable is-striped">
         <thead>
+    <div class="table-container">
+      <table class="table is-fullwidth is-hoverable is-striped">
+        <thead>
           <tr>
             <th>Date</th>
             <th>Type</th>
@@ -111,10 +117,10 @@ const deleteActivity = (id: number) => {
           <tr v-if="userActivities.length === 0">
             <td colspan="7" class="has-text-centered py-5">No activities found. Start tracking!</td>
           </tr>
-          <tr v-for="activity in userActivities" :key="activity.id">
-            <td>{{ activity.date }}</td>
+          <tr v-for="activity in userActivities" :key="activity._id">
+            <td>{{ new Date(activity.date).toLocaleDateString() }}</td>
             <td>
-              <span class="tag is-info is-light">{{ activity.type }}</span>
+              <span class="tag is-info is-light">{{ typeof activity.exerciseTypeId === 'string' ? 'Loading...' : activity.exerciseTypeId.name }}</span>
             </td>
             <td>{{ activity.duration }}</td>
             <td>{{ activity.distance ? activity.distance : '-' }}</td>
@@ -125,7 +131,7 @@ const deleteActivity = (id: number) => {
                 <button class="button is-info is-light" @click="openEditModal(activity)" title="Edit">
                   <span class="icon"><i class="fas fa-edit"></i></span>
                 </button>
-                <button class="button is-danger is-light" @click="deleteActivity(activity.id)" title="Delete">
+                <button class="button is-danger is-light" @click="deleteActivity(activity._id)" title="Delete">
                   <span class="icon"><i class="fas fa-trash"></i></span>
                 </button>
               </div>
@@ -154,15 +160,11 @@ const deleteActivity = (id: number) => {
             <label class="label">Activity Type</label>
             <div class="control">
               <div class="select is-fullwidth">
-                <select v-model="form.type" required>
+                <select v-model="form.exerciseTypeId" required>
                   <option value="" disabled>Select a type</option>
-                  <option>Running</option>
-                  <option>Cycling</option>
-                  <option>Walking</option>
-                  <option>Swimming</option>
-                  <option>Yoga</option>
-                  <option>Weightlifting</option>
-                  <option>Other</option>
+                  <option v-for="type in exerciseTypeStore.exerciseTypes" :key="type._id" :value="type._id">
+                    {{ type.name }}
+                  </option>
                 </select>
               </div>
             </div>
@@ -172,13 +174,13 @@ const deleteActivity = (id: number) => {
               <div class="field">
                 <label class="label">Duration (minutes)</label>
                 <div class="control">
-                  <input class="input" type="number" min="0" v-model.number="form.duration" required />
+                  <input class="input" type="number" min="1" v-model.number="form.duration" required />
                 </div>
               </div>
             </div>
             <div class="column">
               <div class="field">
-                <label class="label">Distance</label>
+                <label class="label">Distance (km)</label>
                 <div class="control">
                   <input class="input" type="number" min="0" step="0.1" v-model.number="form.distance" />
                 </div>
@@ -186,8 +188,9 @@ const deleteActivity = (id: number) => {
             </div>
           </div>
           <div class="field">
-            <label class="label">Calories Burned</label>
-            <div class="control">
+            <p class="help is-info" v-if="!isEditing">Calories will be calculated automatically based on activity type and duration.</p>
+            <label class="label" v-if="isEditing">Calories Burned (Override)</label>
+            <div class="control" v-if="isEditing">
               <input class="input" type="number" min="0" v-model.number="form.calories" />
             </div>
           </div>
@@ -199,7 +202,7 @@ const deleteActivity = (id: number) => {
           </div>
         </section>
         <footer class="modal-card-foot">
-          <button class="button is-primary" @click="saveActivity" :disabled="!form.type || !form.date || form.duration <= 0">Save</button>
+          <button class="button is-primary" @click="saveActivity" :disabled="!form.exerciseTypeId || !form.date || form.duration <= 0">Save</button>
           <button class="button" @click="closeModal">Cancel</button>
         </footer>
       </div>

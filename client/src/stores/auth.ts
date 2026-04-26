@@ -1,60 +1,69 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { useUsersStore, type User } from './users'
+import { type User } from './users'
+import { apiFetch, setToken, removeToken, type ApiResponse } from '../api/session'
 
 export const useAuthStore = defineStore('auth', () => {
-  const usersStore = useUsersStore()
   const currentUser = ref<User | null>(null)
+  const token = ref<string | null>(localStorage.getItem('token'))
 
   const isLoggedIn = computed(() => currentUser.value !== null)
   const isAdmin = computed(() => currentUser.value?.role === 'admin')
 
-  const login = (username: string, password?: string) => {
-    const user = usersStore.users.find(u => u.username === username && u.password === password)
-    if (user) {
-      currentUser.value = user
-      return { success: true, message: 'Login successful' }
+  async function login(username: string, password?: string) {
+    try {
+      const response = await apiFetch<ApiResponse<{ user: User }>>('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ username, password })
+      })
+
+      if (response.token) {
+        setToken(response.token)
+        token.value = response.token
+        currentUser.value = response.data?.user || null
+        return { success: true, message: 'Login successful' }
+      }
+      return { success: false, message: 'Invalid response from server' }
+    } catch (error: any) {
+      return { success: false, message: error.message }
     }
-    return { success: false, message: 'Invalid username or password' }
   }
 
-  const register = (username: string, email: string, fullName: string, password?: string) => {
-    if (!username || !email || !fullName || !password) {
-      return { success: false, message: 'All fields are required' }
-    }
-    if (username.length < 3) {
-      return { success: false, message: 'Username must be at least 3 characters' }
-    }
-    if (password.length < 6) {
-      return { success: false, message: 'Password must be at least 6 characters' }
-    }
-    if (usersStore.users.some(u => u.username === username)) {
-      return { success: false, message: 'Username already exists' }
-    }
-    if (usersStore.users.some(u => u.email === email)) {
-      return { success: false, message: 'Email already exists' }
-    }
+  async function register(username: string, email: string, fullName: string, password?: string) {
+    try {
+      const response = await apiFetch<ApiResponse<{ user: User }>>('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ username, email, fullName, password, role: 'user' })
+      })
 
-    const newUserBase = {
-      username,
-      email,
-      fullName,
-      password,
-      role: 'user' as const,
-      friends: [],
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`
+      if (response.token) {
+        setToken(response.token)
+        token.value = response.token
+        currentUser.value = response.data?.user || null
+        return { success: true, message: 'Account created successfully' }
+      }
+      return { success: false, message: 'Registration failed' }
+    } catch (error: any) {
+      return { success: false, message: error.message }
     }
-    
-    const newId = usersStore.addUser(newUserBase)
-    const newUser = usersStore.getUserById(newId)
-    if (newUser) {
-      currentUser.value = newUser
-    }
-    return { success: true, message: 'Account created successfully' }
   }
 
-  const logout = () => {
+  function logout() {
+    removeToken()
+    token.value = null
     currentUser.value = null
+  }
+
+  /** Initialize user from token if available */
+  async function init() {
+    if (token.value) {
+      try {
+        const response = await apiFetch<ApiResponse<User>>('/users/me')
+        currentUser.value = response.data || null
+      } catch (error) {
+        logout()
+      }
+    }
   }
 
   return {
@@ -63,6 +72,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAdmin,
     login,
     register,
-    logout
+    logout,
+    init
   }
 })
