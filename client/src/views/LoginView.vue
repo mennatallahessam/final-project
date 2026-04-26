@@ -11,7 +11,7 @@ const password = ref('')
 const error = ref('')
 const loading = ref(false)
 
-const handleLogin = () => {
+const handleLogin = async () => {
   error.value = ''
   if (!username.value || !password.value) {
     error.value = 'Please enter username and password'
@@ -19,7 +19,7 @@ const handleLogin = () => {
   }
 
   loading.value = true
-  const result = authStore.login(username.value, password.value)
+  const result = await authStore.login(username.value, password.value)
   loading.value = false
 
   if (result.success) {

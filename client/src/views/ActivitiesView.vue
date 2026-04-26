@@ -100,9 +100,6 @@ const deleteActivity = async (id: string) => {
     <div class="table-container">
       <table class="table is-fullwidth is-hoverable is-striped">
         <thead>
-    <div class="table-container">
-      <table class="table is-fullwidth is-hoverable is-striped">
-        <thead>
           <tr>
             <th>Date</th>
             <th>Type</th>

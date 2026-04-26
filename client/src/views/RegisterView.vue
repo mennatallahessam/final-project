@@ -25,7 +25,7 @@ const register = async () => {
   }
 
   loading.value = true
-  const result = authStore.register(username.value, email.value, fullName.value, password.value)
+  const result = await authStore.register(username.value, email.value, fullName.value, password.value)
   loading.value = false
 
   if (result.success) {
