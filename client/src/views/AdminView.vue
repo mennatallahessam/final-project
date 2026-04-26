@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useUsersStore, type User, type Role } from '@/stores/users'
+import { confirm } from '@/composables/useDialog'
 
 const authStore = useAuthStore()
 const usersStore = useUsersStore()
@@ -44,7 +45,7 @@ const openEditModal = (user: User) => {
     role: user.role
   }
   isEditing.value = true
-  editingId.value = user._id
+  editingId.value = user.id
   isModalActive.value = true
 }
 
@@ -68,11 +69,11 @@ const saveUser = async () => {
 }
 
 const deleteUser = async (id: string) => {
-  if (id === authStore.currentUser?._id) {
+  if (id === authStore.currentUser?.id) {
     alert("You cannot delete yourself.")
     return
   }
-  if (confirm('Are you sure you want to delete this user? This cannot be undone.')) {
+  if (await confirm('Delete User', 'Are you sure you want to delete this user? This cannot be undone.')) {
     await usersStore.deleteUser(id)
   }
 }
@@ -112,8 +113,8 @@ const deleteUser = async (id: string) => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="user in allUsers" :key="user._id">
-            <td><small class="has-text-grey">{{ user._id.substring(0, 8) }}...</small></td>
+          <tr v-for="user in allUsers" :key="user.id">
+            <td><small class="has-text-grey">{{ user.id.substring(0, 8) }}...</small></td>
             <td>
               <div class="is-flex is-align-items-center">
                 <figure class="image is-32x32 mr-2">
@@ -136,9 +137,9 @@ const deleteUser = async (id: string) => {
                 </button>
                 <button 
                   class="button is-danger is-light" 
-                  @click="deleteUser(user._id)" 
+                  @click="deleteUser(user.id)" 
                   title="Delete"
-                  :disabled="user._id === authStore.currentUser?._id"
+                  :disabled="user.id === authStore.currentUser?.id"
                 >
                   <span class="icon"><i class="fas fa-trash"></i></span>
                 </button>

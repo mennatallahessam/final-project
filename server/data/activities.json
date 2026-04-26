@@ -1,0 +1,42 @@
+[
+  {
+    "user_id": "0a6ec723-46bd-4a72-8715-190dd940dce8",
+    "exercise_type_id": "et-0001",
+    "duration": 7,
+    "distance": 0.6,
+    "date": "2026-04-26",
+    "calories": 80,
+    "id": "bb710bc2-9296-4636-8864-59e4e06d38cf",
+    "created_at": "2026-04-26T17:32:53.166Z"
+  },
+  {
+    "user_id": "0a6ec723-46bd-4a72-8715-190dd940dce8",
+    "exercise_type_id": "et-0002",
+    "duration": 3,
+    "distance": 1,
+    "date": "2026-04-26",
+    "calories": 23,
+    "id": "dceae3f8-449e-4e81-bf8c-a6e173a832e6",
+    "created_at": "2026-04-26T17:33:11.200Z"
+  },
+  {
+    "user_id": "0a6ec723-46bd-4a72-8715-190dd940dce8",
+    "exercise_type_id": "et-0004",
+    "duration": 10,
+    "distance": 0.4,
+    "date": "2026-04-26",
+    "calories": 100,
+    "id": "d6b08d8d-0366-4d24-9324-108ada364404",
+    "created_at": "2026-04-26T17:33:25.548Z"
+  },
+  {
+    "user_id": "0a6ec723-46bd-4a72-8715-190dd940dce8",
+    "exercise_type_id": "et-0005",
+    "duration": 8,
+    "distance": 0.3,
+    "date": "2026-04-26",
+    "calories": 48,
+    "id": "3fe69946-badc-4c0a-844b-a9e9d5e915ba",
+    "created_at": "2026-04-26T17:33:42.647Z"
+  }
+]

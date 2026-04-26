@@ -4,7 +4,7 @@ import { useAuthStore } from './auth'
 import { apiFetch, type ApiResponse } from '../api/session'
 
 export interface Activity {
-  _id: string
+  id: string
   userId: string | any
   exerciseTypeId: string | any
   type?: string // Legacy or display name
@@ -25,7 +25,7 @@ export const useActivitiesStore = defineStore('activities', () => {
     if (!authStore.currentUser) return []
     const todayStr = new Date().toISOString().split('T')[0] || ''
     return activities.value.filter(
-      a => a.date.startsWith(todayStr)
+      a => a.date?.startsWith(todayStr)
     )
   })
 
@@ -57,7 +57,7 @@ export const useActivitiesStore = defineStore('activities', () => {
     return response.data || []
   }
 
-  async function addActivity(activity: Omit<Activity, '_id'>) {
+  async function addActivity(activity: Omit<Activity, 'id'>) {
     const response = await apiFetch<ApiResponse<Activity>>('/activities', {
       method: 'POST',
       body: JSON.stringify(activity)
@@ -72,7 +72,7 @@ export const useActivitiesStore = defineStore('activities', () => {
       method: 'PATCH',
       body: JSON.stringify(updates)
     })
-    const index = activities.value.findIndex(a => a._id === id)
+    const index = activities.value.findIndex(a => a.id === id)
     if (index !== -1 && response.data) {
       activities.value[index] = response.data
     }
@@ -80,7 +80,7 @@ export const useActivitiesStore = defineStore('activities', () => {
 
   async function deleteActivity(id: string) {
     await apiFetch(`/activities/${id}`, { method: 'DELETE' })
-    activities.value = activities.value.filter(a => a._id !== id)
+    activities.value = activities.value.filter(a => a.id !== id)
   }
 
   return {

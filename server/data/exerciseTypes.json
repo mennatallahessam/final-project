@@ -1,0 +1,9 @@
+[
+  { "id": "et-0001", "name": "Running", "default_calories_per_minute": 11.4 },
+  { "id": "et-0002", "name": "Cycling", "default_calories_per_minute": 7.5 },
+  { "id": "et-0003", "name": "Walking", "default_calories_per_minute": 4.0 },
+  { "id": "et-0004", "name": "Swimming", "default_calories_per_minute": 10.0 },
+  { "id": "et-0005", "name": "Weight Training", "default_calories_per_minute": 6.0 },
+  { "id": "et-0006", "name": "Yoga", "default_calories_per_minute": 3.5 },
+  { "id": "et-0007", "name": "HIIT", "default_calories_per_minute": 12.0 }
+]

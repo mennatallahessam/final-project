@@ -6,7 +6,7 @@ export type Role = 'admin' | 'user' | 'trainer'
 
 export interface User 
 {
-  _id: string
+  id: string
   username: string
   email: string
   fullName: string
@@ -36,7 +36,7 @@ export const useUsersStore = defineStore('users', () =>
     return response.data
   }
 
-  async function addUser(user: Omit<User, '_id'>) {
+  async function addUser(user: Omit<User, 'id'>) {
     const response = await apiFetch<ApiResponse<User>>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(user)
@@ -44,7 +44,7 @@ export const useUsersStore = defineStore('users', () =>
     if (response.data) {
       users.value.push(response.data)
     }
-    return response.data?._id
+    return response.data?.id
   }
 
   async function updateUser(id: string, updates: Partial<User>) {
@@ -52,7 +52,7 @@ export const useUsersStore = defineStore('users', () =>
       method: 'PATCH',
       body: JSON.stringify(updates)
     })
-    const index = users.value.findIndex(u => u._id === id)
+    const index = users.value.findIndex(u => u.id === id)
     if (index !== -1 && response.data) {
       users.value[index] = response.data
     }
@@ -60,7 +60,7 @@ export const useUsersStore = defineStore('users', () =>
 
   async function deleteUser(id: string) {
     await apiFetch(`/users/${id}`, { method: 'DELETE' })
-    users.value = users.value.filter(u => u._id !== id)
+    users.value = users.value.filter(u => u.id !== id)
   }
 
   async function addFriend(friendId: string) {

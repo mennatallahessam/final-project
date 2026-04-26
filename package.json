@@ -4,11 +4,13 @@
   "scripts": {
     "install:all": "npm install --prefix client && npm install --prefix server",
     "build:client": "npm run build --prefix client",
-    "start": "node server/index.js",
-    "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
-    "build": "npm run build:client"
+    "start": "tsx server/index.ts",
+    "dev": "concurrently \"npm run dev --prefix client\" \"tsx watch server/index.ts\"",
+    "build": "npm run build --prefix client",
+    "seed": "tsx server/models/seed_data.ts"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "tsx": "^4.21.0"
   }
 }

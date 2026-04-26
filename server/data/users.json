@@ -1,0 +1,30 @@
+[
+  {
+    "id": "a1b2c3d4-0001-0000-0000-000000000001",
+    "username": "admin",
+    "email": "admin@fittrack.com",
+    "full_name": "System Administrator",
+    "password": "$2a$10$uJkomja1QF0HwD0053rDFuVF.YtI9yQo9MrcP/XwsMhCBOs59/gUW",
+    "role": "admin",
+    "avatar": "https://ui-avatars.com/api/?name=System+Administrator&background=random"
+  },
+  {
+    "id": "a1b2c3d4-0002-0000-0000-000000000002",
+    "username": "john_doe",
+    "email": "john@fittrack.com",
+    "full_name": "John Doe",
+    "password": "$2a$10$uJkomja1QF0HwD0053rDFuVF.YtI9yQo9MrcP/XwsMhCBOs59/gUW",
+    "role": "user",
+    "avatar": "https://ui-avatars.com/api/?name=John+Doe&background=random"
+  },
+  {
+    "username": "menna",
+    "email": "menna@gmail.com",
+    "full_name": "menna",
+    "password": "$2a$10$IdahK2AisteOs/kWrmup7uzrvpVTeO73aTCnNFGPOw52euZuRW0vy",
+    "role": "user",
+    "avatar": "https://ui-avatars.com/api/?name=menna&background=random",
+    "id": "0a6ec723-46bd-4a72-8715-190dd940dce8",
+    "created_at": "2026-04-26T17:26:05.237Z"
+  }
+]

@@ -11,7 +11,7 @@ const activitiesStore = useActivitiesStore()
 const friends = computed(() => {
   if (!authStore.currentUser) return []
   // friends are populated on the server
-  return authStore.currentUser.friends as unknown as User[]
+  return (authStore.currentUser.friends || []) as unknown as User[]
 })
 
 const selectedFriend = ref<User | null>(null)
@@ -21,8 +21,8 @@ const loadingActivities = ref(false)
 const allOtherUsers = computed(() => {
   if (!authStore.currentUser) return []
   return usersStore.users.filter(u => 
-    u._id !== authStore.currentUser!._id && 
-    !authStore.currentUser!.friends.some((f: any) => (f._id || f) === u._id)
+    u.id !== authStore.currentUser!.id && 
+    !(authStore.currentUser!.friends || []).some((f: any) => (f.id || f) === u.id)
   )
 })
 
@@ -35,7 +35,7 @@ const selectFriend = async (friend: User) => {
   selectedFriend.value = friend
   loadingActivities.value = true
   try {
-    selectedFriendActivities.value = await activitiesStore.fetchUserActivities(friend._id)
+    selectedFriendActivities.value = await activitiesStore.fetchUserActivities(friend.id)
     selectedFriendActivities.value.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   } finally {
     loadingActivities.value = false
@@ -43,14 +43,14 @@ const selectFriend = async (friend: User) => {
 }
 
 const followUser = async (user: User) => {
-  await usersStore.addFriend(user._id)
+  await usersStore.addFriend(user.id)
   await authStore.init() // Refresh my profile
 }
 
 const unfollowFriend = async (friendId: string) => {
   if (confirm('Unfollow this friend?')) {
     await usersStore.removeFriend(friendId)
-    if (selectedFriend.value?._id === friendId) {
+    if (selectedFriend.value?.id === friendId) {
       selectedFriend.value = null
       selectedFriendActivities.value = []
     }
@@ -80,8 +80,8 @@ const unfollowFriend = async (friendId: string) => {
           </div>
           <div
             v-for="friend in friends"
-            :key="friend._id"
-            :class="['panel-block', 'is-flex', 'is-justify-content-space-between', { 'is-active': selectedFriend?._id === friend._id }]"
+            :key="friend.id"
+            :class="['panel-block', 'is-flex', 'is-justify-content-space-between', { 'is-active': selectedFriend?.id === friend.id }]"
             style="cursor: pointer;"
             @click="selectFriend(friend)"
           >
@@ -91,7 +91,7 @@ const unfollowFriend = async (friendId: string) => {
               </span>
               {{ friend.fullName }}
             </div>
-            <button class="button is-small is-danger is-inverted" @click.stop="unfollowFriend(friend._id)" title="Unfollow">
+            <button class="button is-small is-danger is-inverted" @click.stop="unfollowFriend(friend.id)" title="Unfollow">
               <i class="fas fa-user-minus"></i>
             </button>
           </div>
@@ -110,7 +110,7 @@ const unfollowFriend = async (friendId: string) => {
           <div v-if="allOtherUsers.length === 0" class="panel-block has-text-grey">
             No other users to follow.
           </div>
-          <div v-for="user in allOtherUsers.slice(0, 5)" :key="user._id" class="panel-block is-flex is-justify-content-space-between">
+          <div v-for="user in allOtherUsers.slice(0, 5)" :key="user.id" class="panel-block is-flex is-justify-content-space-between">
             <div>{{ user.fullName }} <small class="has-text-grey">@{{ user.username }}</small></div>
             <button class="button is-small is-link is-outlined" @click="followUser(user)">
               Follow
@@ -144,7 +144,7 @@ const unfollowFriend = async (friendId: string) => {
                 <tr v-if="selectedFriendActivities.length === 0">
                   <td colspan="5" class="has-text-centered py-4">No activities logged yet.</td>
                 </tr>
-                <tr v-for="activity in selectedFriendActivities" :key="activity._id">
+                <tr v-for="activity in selectedFriendActivities" :key="activity.id">
                   <td>{{ new Date(activity.date).toLocaleDateString() }}</td>
                   <td>
                     <span class="tag is-info is-light">

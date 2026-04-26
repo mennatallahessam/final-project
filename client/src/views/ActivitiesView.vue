@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useActivitiesStore, type Activity } from '@/stores/activities'
 import { useExerciseTypeStore } from '@/stores/exerciseTypes'
+import { confirm } from '@/composables/useDialog'
 
 const authStore = useAuthStore()
 const activitiesStore = useActivitiesStore()
@@ -41,7 +42,7 @@ const openAddModal = () => {
 
 const openEditModal = (activity: Activity) => {
   form.value = {
-    exerciseTypeId: typeof activity.exerciseTypeId === 'string' ? activity.exerciseTypeId : activity.exerciseTypeId._id,
+    exerciseTypeId: activity.exerciseTypeId,
     duration: activity.duration,
     distance: activity.distance || 0,
     date: activity.date.split('T')[0] || '',
@@ -49,7 +50,7 @@ const openEditModal = (activity: Activity) => {
     notes: activity.notes || ''
   }
   isEditing.value = true
-  editingId.value = activity._id
+  editingId.value = activity.id
   isModalActive.value = true
 }
 
@@ -60,22 +61,26 @@ const closeModal = () => {
 const saveActivity = async () => {
   if (!authStore.currentUser) return
 
-  const payload = {
-    ...form.value,
-    date: form.value.date || new Date().toISOString().split('T')[0]
+  const payload: any = {
+    exercise_type_id: form.value.exerciseTypeId,
+    duration: form.value.duration,
+    distance: form.value.distance || undefined,
+    date: form.value.date || new Date().toISOString().split('T')[0],
+    notes: form.value.notes || undefined
   }
 
   if (isEditing.value && editingId.value) {
-    await activitiesStore.updateActivity(editingId.value, payload as any)
+    await activitiesStore.updateActivity(editingId.value, payload)
   } else {
-    await activitiesStore.addActivity(payload as any)
+    await activitiesStore.addActivity(payload)
   }
   closeModal()
 }
 
 const deleteActivity = async (id: string) => {
-  if (confirm('Are you sure you want to delete this activity?')) {
+  if (await confirm('Delete Activity', 'Are you sure you want to delete this activity?')) {
     await activitiesStore.deleteActivity(id)
+    await activitiesStore.fetchMyActivities()
   }
 }
 </script>
@@ -114,21 +119,21 @@ const deleteActivity = async (id: string) => {
           <tr v-if="userActivities.length === 0">
             <td colspan="7" class="has-text-centered py-5">No activities found. Start tracking!</td>
           </tr>
-          <tr v-for="activity in userActivities" :key="activity._id">
+          <tr v-for="activity in userActivities" :key="activity.id">
             <td>{{ new Date(activity.date).toLocaleDateString() }}</td>
             <td>
-              <span class="tag is-info is-light">{{ typeof activity.exerciseTypeId === 'string' ? 'Loading...' : activity.exerciseTypeId.name }}</span>
+              <span class="tag is-info is-light">{{ (activity as any).exerciseType?.name || activity.exerciseTypeId }}</span>
             </td>
             <td>{{ activity.duration }}</td>
-            <td>{{ activity.distance ? activity.distance : '-' }}</td>
-            <td>{{ activity.calories }}</td>
+            <td>{{ activity.distance ? activity.distance + ' km' : '-' }}</td>
+            <td>{{ activity.calories }} kcal</td>
             <td>{{ activity.notes || '-' }}</td>
             <td>
               <div class="buttons are-small">
                 <button class="button is-info is-light" @click="openEditModal(activity)" title="Edit">
                   <span class="icon"><i class="fas fa-edit"></i></span>
                 </button>
-                <button class="button is-danger is-light" @click="deleteActivity(activity._id)" title="Delete">
+                <button class="button is-danger is-light" @click="deleteActivity(activity.id)" title="Delete">
                   <span class="icon"><i class="fas fa-trash"></i></span>
                 </button>
               </div>
@@ -159,7 +164,7 @@ const deleteActivity = async (id: string) => {
               <div class="select is-fullwidth">
                 <select v-model="form.exerciseTypeId" required>
                   <option value="" disabled>Select a type</option>
-                  <option v-for="type in exerciseTypeStore.exerciseTypes" :key="type._id" :value="type._id">
+                  <option v-for="type in exerciseTypeStore.exerciseTypes" :key="type.id" :value="type.id">
                     {{ type.name }}
                   </option>
                 </select>
