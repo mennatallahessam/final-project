@@ -7,7 +7,8 @@
     "start": "tsx server/index.ts",
     "dev": "concurrently \"npm run dev --prefix client\" \"tsx watch server/index.ts\"",
     "build": "npm run build --prefix client",
-    "seed": "tsx server/models/seed_data.ts"
+    "seed": "tsx server/models/seed_data.ts",
+    "postinstall": "npm run install:all"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
