@@ -1,4 +1,4 @@
-import { readJson, writeJson, generateId } from './jsonStore'
+import { supabase, toCamelCase, toSnakeCase } from './supabase'
 
 export interface UserRecord {
   id: string
@@ -12,59 +12,98 @@ export interface UserRecord {
   created_at?: string
 }
 
-const FILE = 'users.json'
-
-export function getAll(): UserRecord[] {
-  return readJson<UserRecord>(FILE)
+export async function getAll(): Promise<UserRecord[]> {
+  const { data, error } = await supabase.from('users').select('*')
+  if (error) throw error
+  return data.map(toCamelCase) as UserRecord[]
 }
 
-export function getById(id: string): UserRecord | undefined {
-  return getAll().find(u => u.id === id)
+export async function getById(id: string): Promise<UserRecord | undefined> {
+  const { data, error } = await supabase.from('users').select('*').eq('id', id).single()
+  if (error && error.code !== 'PGRST116') throw error
+  return data ? toCamelCase(data) as UserRecord : undefined
 }
 
-export function getByUsername(username: string): UserRecord | undefined {
-  return getAll().find(u => u.username === username)
+export async function getByUsername(username: string): Promise<UserRecord | undefined> {
+  const { data, error } = await supabase.from('users').select('*').eq('username', username).single()
+  if (error && error.code !== 'PGRST116') throw error
+  return data ? toCamelCase(data) as UserRecord : undefined
 }
 
-export function getByEmail(email: string): UserRecord | undefined {
-  return getAll().find(u => u.email === email)
+export async function getByEmail(email: string): Promise<UserRecord | undefined> {
+  const { data, error } = await supabase.from('users').select('*').eq('email', email).single()
+  if (error && error.code !== 'PGRST116') throw error
+  return data ? toCamelCase(data) as UserRecord : undefined
 }
 
-export function create(data: Omit<UserRecord, 'id' | 'created_at'>): UserRecord {
-  const users = getAll()
-  const user: UserRecord = { ...data, id: generateId(), created_at: new Date().toISOString() }
-  users.push(user)
-  writeJson(FILE, users)
-  return user
+export async function create(data: Omit<UserRecord, 'id' | 'created_at'>): Promise<UserRecord> {
+  const snakeCaseData = toSnakeCase(data)
+  const { data: insertedData, error } = await supabase
+    .from('users')
+    .insert([snakeCaseData])
+    .select()
+    .single()
+  if (error) throw error
+  return toCamelCase(insertedData) as UserRecord
 }
 
-export function update(id: string, data: Partial<UserRecord>): UserRecord | undefined {
-  const users = getAll()
-  const index = users.findIndex(u => u.id === id)
-  if (index === -1) return undefined
-  users[index] = { ...users[index], ...data }
-  writeJson(FILE, users)
-  return users[index]
+export async function update(id: string, data: Partial<UserRecord>): Promise<UserRecord | undefined> {
+  const snakeCaseData = toSnakeCase(data)
+  const { data: updatedData, error } = await supabase
+    .from('users')
+    .update(snakeCaseData)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error && error.code !== 'PGRST116') throw error
+  return updatedData ? toCamelCase(updatedData) as UserRecord : undefined
 }
 
-export function remove(id: string): boolean {
-  const users = getAll()
-  const filtered = users.filter(u => u.id !== id)
-  if (filtered.length === users.length) return false
-  writeJson(FILE, filtered)
+export async function remove(id: string): Promise<boolean> {
+  const { error } = await supabase.from('users').delete().eq('id', id)
+  if (error) throw error
   return true
 }
 
-export function enrichUser(user: UserRecord) {
-  const friends = (user.friends || []).map(friendId => {
-    const f = getById(friendId)
+export async function enrichUser(user: UserRecord) {
+  const friends = await Promise.all((user.friends || []).map(async (friendId: string) => {
+    const f = await getById(friendId)
     if (f) {
       const { password, ...safeF } = f
       return safeF
     }
     return null
-  }).filter(Boolean)
+  }))
   
   const { password, ...safeUser } = user
-  return { ...safeUser, friends }
+  return { ...safeUser, friends: friends.filter(Boolean) }
+}
+
+export async function seed() {
+  const seedUsers = [
+    {
+      username: 'admin',
+      email: 'admin@example.com',
+      full_name: 'Admin User',
+      password: 'hashed_password_will_be_set_by_auth',
+      role: 'admin',
+      avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=random'
+    },
+    {
+      username: 'trainer1',
+      email: 'trainer@example.com',
+      full_name: 'Trainer User',
+      password: 'hashed_password_will_be_set_by_auth',
+      role: 'trainer',
+      avatar: 'https://ui-avatars.com/api/?name=Trainer+User&background=random'
+    }
+  ]
+
+  for (const user of seedUsers) {
+    const existing = await getByUsername(user.username)
+    if (!existing) {
+      await create(user as any)
+      console.log(`Created user: ${user.username}`)
+    }
+  }
 }

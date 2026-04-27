@@ -20,12 +20,12 @@ export async function protect(req: any, res: Response, next: NextFunction) {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { id: string }
-    const user = getById(decoded.id)
+    const user = await getById(decoded.id)
     if (!user) {
       return res.status(401).json({ status: 'fail', message: 'User belonging to this token no longer exists' })
     }
     // Attach enriched user to request (without password, with friends populated)
-    req.user = enrichUser(user)
+    req.user = await enrichUser(user)
     next()
   } catch (error) {
     return res.status(401).json({ status: 'fail', message: 'Invalid or expired token' })

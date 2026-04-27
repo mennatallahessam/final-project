@@ -14,18 +14,20 @@ app.post('/register', async (req, res) => {
       return res.status(400).json({ status: 'fail', message: 'Please provide username, email, fullName and password' })
     }
 
-    if (getByUsername(username)) {
+    const existingUsername = await getByUsername(username)
+    if (existingUsername) {
       return res.status(400).json({ status: 'fail', message: 'Username already taken' })
     }
 
-    if (getByEmail(email)) {
+    const existingEmail = await getByEmail(email)
+    if (existingEmail) {
       return res.status(400).json({ status: 'fail', message: 'Email already registered' })
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
     const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`
 
-    const newUser = create({
+    const newUser = await create({
       username,
       email,
       full_name: fullName,
@@ -35,7 +37,7 @@ app.post('/register', async (req, res) => {
     })
 
     const token = signToken(newUser.id)
-    const safeUser = enrichUser(newUser)
+    const safeUser = await enrichUser(newUser)
 
     res.status(201).json({
       status: 'success',
@@ -56,7 +58,7 @@ app.post('/login', async (req, res) => {
       return res.status(400).json({ status: 'fail', message: 'Please provide username and password' })
     }
 
-    const user = getByUsername(username)
+    const user = await getByUsername(username)
     if (!user) {
       return res.status(401).json({ status: 'fail', message: 'Incorrect username or password' })
     }
@@ -67,7 +69,7 @@ app.post('/login', async (req, res) => {
     }
 
     const token = signToken(user.id)
-    const safeUser = enrichUser(user)
+    const safeUser = await enrichUser(user)
 
     res.json({
       status: 'success',

@@ -4,8 +4,10 @@ CREATE TABLE users (
   username TEXT UNIQUE NOT NULL,
   email TEXT UNIQUE NOT NULL,
   full_name TEXT NOT NULL,
+  password TEXT NOT NULL,
   avatar TEXT,
   role TEXT DEFAULT 'user' CHECK (role IN ('user', 'admin', 'trainer')),
+  friends UUID[] DEFAULT '{}',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

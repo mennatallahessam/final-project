@@ -1,4 +1,4 @@
-import { readJson, writeJson, generateId } from './jsonStore'
+import { supabase, toCamelCase, toSnakeCase } from './supabase'
 import { getById as getExerciseTypeById } from './exerciseTypes'
 import { getById as getUserById } from './users'
 
@@ -14,56 +14,66 @@ export interface ActivityRecord {
   created_at?: string
 }
 
-const FILE = 'activities.json'
-
-export function getAll(): ActivityRecord[] {
-  return readJson<ActivityRecord>(FILE)
+export async function getAll(): Promise<ActivityRecord[]> {
+  const { data, error } = await supabase.from('activities').select('*')
+  if (error) throw error
+  return data.map(toCamelCase) as ActivityRecord[]
 }
 
-export function getByUserId(userId: string): ActivityRecord[] {
-  return getAll().filter(a => a.user_id === userId)
+export async function getByUserId(userId: string): Promise<ActivityRecord[]> {
+  const { data, error } = await supabase.from('activities').select('*').eq('user_id', userId)
+  if (error) throw error
+  return data.map(toCamelCase) as ActivityRecord[]
 }
 
-export function getById(id: string): ActivityRecord | undefined {
-  return getAll().find(a => a.id === id)
+export async function getById(id: string): Promise<ActivityRecord | undefined> {
+  const { data, error } = await supabase.from('activities').select('*').eq('id', id).single()
+  if (error && error.code !== 'PGRST116') throw error
+  return data ? toCamelCase(data) as ActivityRecord : undefined
 }
 
-export function create(data: Omit<ActivityRecord, 'id' | 'created_at'>): ActivityRecord {
-  const activities = getAll()
-  const activity: ActivityRecord = {
-    ...data,
-    id: generateId(),
-    created_at: new Date().toISOString()
-  }
-  activities.push(activity)
-  writeJson(FILE, activities)
-  return activity
+export async function create(data: Omit<ActivityRecord, 'id' | 'created_at'>): Promise<ActivityRecord> {
+  const snakeCaseData = toSnakeCase(data)
+  const { data: insertedData, error } = await supabase
+    .from('activities')
+    .insert([snakeCaseData])
+    .select()
+    .single()
+  if (error) throw error
+  return toCamelCase(insertedData) as ActivityRecord
 }
 
-export function update(id: string, data: Partial<ActivityRecord>): ActivityRecord | undefined {
-  const activities = getAll()
-  const index = activities.findIndex(a => a.id === id)
-  if (index === -1) return undefined
-  activities[index] = { ...activities[index], ...data }
-  writeJson(FILE, activities)
-  return activities[index]
+export async function update(id: string, data: Partial<ActivityRecord>): Promise<ActivityRecord | undefined> {
+  const snakeCaseData = toSnakeCase(data)
+  const { data: updatedData, error } = await supabase
+    .from('activities')
+    .update(snakeCaseData)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error && error.code !== 'PGRST116') throw error
+  return updatedData ? toCamelCase(updatedData) as ActivityRecord : undefined
 }
 
-export function remove(id: string): boolean {
-  const activities = getAll()
-  const filtered = activities.filter(a => a.id !== id)
-  if (filtered.length === activities.length) return false
-  writeJson(FILE, filtered)
+export async function remove(id: string): Promise<boolean> {
+  const { error } = await supabase.from('activities').delete().eq('id', id)
+  if (error) throw error
   return true
 }
 
 // Enrich activity with user and exercise type info
-export function enrich(activity: ActivityRecord) {
-  const exerciseType = getExerciseTypeById(activity.exercise_type_id)
-  const user = getUserById(activity.user_id)
+export async function enrich(activity: ActivityRecord) {
+  const exerciseType = await getExerciseTypeById(activity.exercise_type_id)
+  const user = await getUserById(activity.user_id)
   return {
     ...activity,
     exerciseType: exerciseType || null,
     user: user ? { id: user.id, username: user.username, full_name: user.full_name, avatar: user.avatar } : null
   }
+}
+
+export async function seed() {
+  // Seeding activities would require existing users and exercise types
+  // This is typically done after other tables are seeded
+  console.log('Activities table ready for seeding')
 }
