@@ -88,14 +88,14 @@ const demoLogin = (user: string, pass: string) => {
               <strong>Demo Accounts:</strong>
             </p>
             <div class="buttons is-centered">
-              <button class="button is-small is-light" @click="demoLogin('admin', 'admin123')">
-                Admin (admin / admin123)
+              <button class="button is-small is-light" @click="demoLogin('menna', 'password')">
+                Menna (menna / password)
               </button>
-              <button class="button is-small is-light" @click="demoLogin('john', 'john123')">
-                John (john / john123)
+              <button class="button is-small is-light" @click="demoLogin('sara', 'password')">
+                Sara (sara / password)
               </button>
-              <button class="button is-small is-light" @click="demoLogin('jane', 'jane123')">
-                Jane (jane / jane123)
+              <button class="button is-small is-light" @click="demoLogin('jessy', 'password')">
+                Jessy (jessy / password)
               </button>
             </div>
           </div>
