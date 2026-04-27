@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: fittrack-fitness-tracker
+    name: fittrack
     env: node
     buildCommand: npm run install:all && npm run build
     startCommand: npm start
@@ -11,3 +11,5 @@ services:
         sync: false
       - key: JWT_EXPIRES_IN
         value: 30d
+      - key: PORT
+        value: 3000
