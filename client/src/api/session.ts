@@ -1,4 +1,4 @@
-export const API_ROOT = import.meta.env.VITE_API_ROOT || 'http://localhost:3000/api/v1';
+export const API_ROOT = import.meta.env.VITE_API_ROOT || (import.meta.env.PROD ? '/api/v1' : 'http://localhost:3000/api/v1');
 
 /**
  * Shared API response type

@@ -27,7 +27,7 @@ app.use('/api/v1/activities', protect, activitiesController)
 app.use('/api/v1/exercise-types', exerciseTypesController)  // public
 
 // ── Health check ────────────────────────────────────────────────────────────
-app.get('/', (req, res) => {
+app.get('/api/v1/health', (req, res) => {
   res.json({ status: 'success', message: 'FitTrack API is running 🏃' })
 })
 
