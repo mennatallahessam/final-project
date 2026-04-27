@@ -2,6 +2,8 @@ import express from 'express'
 import cors from 'cors'
 import morgan from 'morgan'
 import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
 dotenv.config()
 
 import authController from './controllers/auth'
@@ -33,6 +35,14 @@ app.get('/', (req, res) => {
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack)
   res.status(err.status || 500).json({ status: 'error', message: err.message || 'Something went wrong' })
+})
+
+// ── Serve Frontend ────────────────────────────────────────────────────────────
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+app.use(express.static(path.join(__dirname, '../client/dist')))
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/dist/index.html'))
 })
 
 // ── Start ────────────────────────────────────────────────────────────────────
