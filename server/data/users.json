@@ -26,5 +26,15 @@
     "avatar": "https://ui-avatars.com/api/?name=Jessy&background=random",
     "id": "0a6ec723-46bd-4a72-8715-190dd940dce8",
     "created_at": "2026-04-26T17:26:05.237Z"
+  },
+  {
+    "username": "nrnr",
+    "email": "noor@gmail.com",
+    "full_name": "Nour",
+    "password": "$2a$10$6cE3tXj5PH9WReIFP39nk.TK6h4X3aP/nVNS7C/E6tQeCIT.fUvBq",
+    "role": "user",
+    "avatar": "https://ui-avatars.com/api/?name=Nour&background=random",
+    "id": "e588b428-7521-4553-8ae7-1ec609bd8bc5",
+    "created_at": "2026-04-27T21:01:25.817Z"
   }
 ]

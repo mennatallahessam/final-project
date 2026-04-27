@@ -38,5 +38,35 @@
     "calories": 48,
     "id": "3fe69946-badc-4c0a-844b-a9e9d5e915ba",
     "created_at": "2026-04-26T17:33:42.647Z"
+  },
+  {
+    "user_id": "a1b2c3d4-0001-0000-0000-000000000001",
+    "exercise_type_id": "et-0001",
+    "duration": 4,
+    "distance": 0.4,
+    "date": "2026-04-27",
+    "calories": 46,
+    "id": "d1256b8f-d6a0-4120-8251-c8976ce97ca0",
+    "created_at": "2026-04-27T20:59:46.736Z"
+  },
+  {
+    "user_id": "a1b2c3d4-0001-0000-0000-000000000001",
+    "exercise_type_id": "et-0002",
+    "duration": 1,
+    "distance": 0.1,
+    "date": "2026-04-27",
+    "calories": 8,
+    "id": "7d61e432-9914-4a8c-9910-97f9b1c0b0f7",
+    "created_at": "2026-04-27T21:00:00.146Z"
+  },
+  {
+    "user_id": "a1b2c3d4-0001-0000-0000-000000000001",
+    "exercise_type_id": "et-0005",
+    "duration": 5,
+    "distance": 0.5,
+    "date": "2026-04-27",
+    "calories": 30,
+    "id": "f7e90fce-ee08-47f8-b10b-32072bf40708",
+    "created_at": "2026-04-27T21:00:20.761Z"
   }
 ]
