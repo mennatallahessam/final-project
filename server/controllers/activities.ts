@@ -1,11 +1,12 @@
 import express from 'express'
 import * as model from '../models/activities'
 import { getById as getExerciseTypeById } from '../models/exerciseTypes'
+import { restrictTo } from '../middleware/auth'
 
 const app = express.Router()
 
 // GET /api/v1/activities — all activities (admin)
-app.get('/', (req: any, res) => {
+app.get('/', restrictTo('admin'), (req: any, res) => {
   const activities = model.getAll().map(model.enrich)
   res.json({ status: 'success', data: activities })
 })

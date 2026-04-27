@@ -1,6 +1,6 @@
 import express from 'express'
 import * as model from '../models/users'
-import { protect } from '../middleware/auth'
+import { protect, restrictTo } from '../middleware/auth'
 
 const app = express.Router()
 
@@ -24,8 +24,8 @@ app.get('/:id', (req, res) => {
   res.json({ status: 'success', data: safeUser })
 })
 
-// POST /api/v1/users
-app.post('/', (req, res) => {
+// POST /api/v1/users (Admin only)
+app.post('/', restrictTo('admin'), (req, res) => {
   try {
     const user = model.create(req.body)
     const safeUser = model.enrichUser(user)
@@ -35,16 +35,16 @@ app.post('/', (req, res) => {
   }
 })
 
-// PATCH /api/v1/users/:id
-app.patch('/:id', (req, res) => {
+// PATCH /api/v1/users/:id (Admin only)
+app.patch('/:id', restrictTo('admin'), (req, res) => {
   const user = model.update(req.params.id, req.body)
   if (!user) return res.status(404).json({ status: 'fail', message: 'User not found' })
   const safeUser = model.enrichUser(user)
   res.json({ status: 'success', data: safeUser })
 })
 
-// DELETE /api/v1/users/:id
-app.delete('/:id', (req, res) => {
+// DELETE /api/v1/users/:id (Admin only)
+app.delete('/:id', restrictTo('admin'), (req, res) => {
   const deleted = model.remove(req.params.id)
   if (!deleted) return res.status(404).json({ status: 'fail', message: 'User not found' })
   res.status(204).send()
