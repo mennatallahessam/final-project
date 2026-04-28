@@ -80,30 +80,43 @@ export async function enrichUser(user: UserRecord) {
 }
 
 export async function seed() {
+  const bcrypt = await import('bcryptjs')
+  
   const seedUsers = [
     {
-      username: 'admin',
-      email: 'admin@example.com',
-      full_name: 'Admin User',
-      password: 'hashed_password_will_be_set_by_auth',
+      username: 'menna',
+      email: 'menna@example.com',
+      full_name: 'Menna',
+      password: 'password',
       role: 'admin',
-      avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=random'
+      avatar: 'https://ui-avatars.com/api/?name=Menna&background=random'
     },
     {
-      username: 'trainer1',
-      email: 'trainer@example.com',
-      full_name: 'Trainer User',
-      password: 'hashed_password_will_be_set_by_auth',
+      username: 'sara',
+      email: 'sara@example.com',
+      full_name: 'Sara',
+      password: 'password',
       role: 'trainer',
-      avatar: 'https://ui-avatars.com/api/?name=Trainer+User&background=random'
+      avatar: 'https://ui-avatars.com/api/?name=Sara&background=random'
+    },
+    {
+      username: 'jessy',
+      email: 'jessy@example.com',
+      full_name: 'Jessy',
+      password: 'password',
+      role: 'user',
+      avatar: 'https://ui-avatars.com/api/?name=Jessy&background=random'
     }
-  ]
+  ];
 
   for (const user of seedUsers) {
     const existing = await getByUsername(user.username)
     if (!existing) {
-      await create(user as any)
+      const hashedPassword = await bcrypt.default.hash(user.password, 10)
+      await create({ ...user, password: hashedPassword } as any)
       console.log(`Created user: ${user.username}`)
+    } else {
+      console.log(`User ${user.username} already exists, skipping...`)
     }
   }
 }
