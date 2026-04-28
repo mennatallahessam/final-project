@@ -36,23 +36,41 @@ app.get('/:id', async (req, res) => {
 // POST /api/v1/users (Admin only)
 app.post('/', restrictTo('admin'), async (req, res) => {
   try {
-    const user = await model.create(req.body)
-    const safeUser = await model.enrichUser(user)
-    res.status(201).json({ status: 'success', data: safeUser })
+    const bcrypt = await import('bcryptjs');
+    const { password, ...rest } = req.body;
+    let newUserData = req.body;
+    
+    if (password) {
+      const hashedPassword = await bcrypt.default.hash(password, 10);
+      newUserData = { ...rest, password: hashedPassword };
+    }
+    
+    const user = await model.create(newUserData);
+    const safeUser = await model.enrichUser(user);
+    res.status(201).json({ status: 'success', data: safeUser });
   } catch (error: any) {
-    res.status(400).json({ status: 'fail', message: error.message })
+    res.status(400).json({ status: 'fail', message: error.message });
   }
 })
 
 // PATCH /api/v1/users/:id (Admin only)
 app.patch('/:id', restrictTo('admin'), async (req, res) => {
   try {
-    const user = await model.update(req.params.id, req.body)
-    if (!user) return res.status(404).json({ status: 'fail', message: 'User not found' })
-    const safeUser = await model.enrichUser(user)
-    res.json({ status: 'success', data: safeUser })
+    const bcrypt = await import('bcryptjs');
+    const { password, ...rest } = req.body;
+    let updates = req.body;
+    
+    if (password) {
+      const hashedPassword = await bcrypt.default.hash(password, 10);
+      updates = { ...rest, password: hashedPassword };
+    }
+
+    const user = await model.update(req.params.id, updates);
+    if (!user) return res.status(404).json({ status: 'fail', message: 'User not found' });
+    const safeUser = await model.enrichUser(user);
+    res.json({ status: 'success', data: safeUser });
   } catch (error: any) {
-    res.status(500).json({ status: 'error', message: error.message })
+    res.status(500).json({ status: 'error', message: error.message });
   }
 })
 

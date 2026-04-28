@@ -37,7 +37,7 @@ export const useUsersStore = defineStore('users', () =>
   }
 
   async function addUser(user: Omit<User, 'id'>) {
-    const response = await apiFetch<ApiResponse<User>>('/auth/register', {
+    const response = await apiFetch<ApiResponse<User>>('/users', {
       method: 'POST',
       body: JSON.stringify(user)
     })

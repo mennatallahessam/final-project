@@ -4,14 +4,14 @@ import { getById as getUserById } from './users'
 
 export interface ActivityRecord {
   id: string
-  user_id: string
-  exercise_type_id: string
+  userId: string
+  exerciseTypeId: string
   duration: number
   distance?: number
   date: string
   calories: number
   notes?: string
-  created_at?: string
+  createdAt?: string
 }
 
 export async function getAll(): Promise<ActivityRecord[]> {
@@ -32,7 +32,7 @@ export async function getById(id: string): Promise<ActivityRecord | undefined> {
   return data ? toCamelCase(data) as ActivityRecord : undefined
 }
 
-export async function create(data: Omit<ActivityRecord, 'id' | 'created_at'>): Promise<ActivityRecord> {
+export async function create(data: Omit<ActivityRecord, 'id' | 'createdAt'> | any): Promise<ActivityRecord> {
   const snakeCaseData = toSnakeCase(data)
   const { data: insertedData, error } = await supabase
     .from('activities')
@@ -63,8 +63,12 @@ export async function remove(id: string): Promise<boolean> {
 
 // Enrich activity with user and exercise type info
 export async function enrich(activity: ActivityRecord) {
-  const exerciseType = await getExerciseTypeById(activity.exercise_type_id)
-  const user = await getUserById(activity.user_id)
+  // activity has been camelCased by the get/create functions
+  const exerciseTypeId = (activity as any).exerciseTypeId || (activity as any).exercise_type_id;
+  const userId = (activity as any).userId || (activity as any).user_id;
+
+  const exerciseType = await getExerciseTypeById(exerciseTypeId)
+  const user = await getUserById(userId)
   return {
     ...activity,
     exerciseType: exerciseType || null,

@@ -9,6 +9,7 @@ dotenv.config()
 import authController from './controllers/auth'
 import usersController from './controllers/users'
 import activitiesController from './controllers/activities'
+import { seed as runSeeding } from './models/seed_data';
 import exerciseTypesController from './controllers/exerciseTypes'
 import { protect } from './middleware/auth'
 
@@ -24,7 +25,16 @@ app.use(express.json())
 app.use('/api/v1/auth', authController)
 app.use('/api/v1/users', protect, usersController)
 app.use('/api/v1/activities', protect, activitiesController)
-app.use('/api/v1/exercise-types', exerciseTypesController)  // public
+app.use('/api/v1/exercise-types', exerciseTypesController); // public
+
+(async () => {
+  try {
+    await runSeeding();
+    console.log('✅ Database seeded');
+  } catch (e) {
+    console.error('⚠️ Seeding error', e);
+  }
+})();
 
 // ── Health check ────────────────────────────────────────────────────────────
 app.get('/api/v1/health', (req, res) => {

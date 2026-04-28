@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js",
-    "seed": "node seed.js"
+    "dev": "tsx index.ts",
+    "seed": "tsx models/seed_data.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.104.1",
@@ -25,6 +25,7 @@
     "@types/morgan": "^1.9.10",
     "@types/node": "^25.6.0",
     "nodemon": "^3.1.4",
+    "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }
