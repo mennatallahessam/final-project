@@ -57,10 +57,10 @@ const logout = () => {
               <span>Statistics</span>
             </span>
           </RouterLink>
-          <RouterLink v-if="authStore.isLoggedIn && authStore.currentUser?.role === 'admin'" to="/admin" class="navbar-item" active-class="is-active">
+          <RouterLink v-if="authStore.isLoggedIn && (authStore.isAdmin || authStore.isTrainer)" to="/admin" class="navbar-item" active-class="is-active">
             <span class="icon-text">
-              <span class="icon"><i class="fas fa-cog"></i></span>
-              <span>Admin</span>
+              <span class="icon"><i :class="authStore.isAdmin ? 'fas fa-cog' : 'fas fa-address-book'"></i></span>
+              <span>{{ authStore.isAdmin ? 'Admin' : 'Directory' }}</span>
             </span>
           </RouterLink>
         </div>

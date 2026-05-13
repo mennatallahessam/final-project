@@ -70,7 +70,7 @@ router.beforeEach((to, from, next) => {
     return next('/login')
   }
 
-  if (to.path === '/admin' && !authStore.isAdmin) {
+  if (to.path === '/admin' && !authStore.isAdmin && !authStore.isTrainer) {
     return next('/')
   }
 

@@ -24,7 +24,7 @@ const form = ref({ ...emptyForm })
 const allUsers = computed(() => usersStore.users)
 
 onMounted(() => {
-  if (authStore.isAdmin) {
+  if (authStore.isAdmin || authStore.isTrainer) {
     usersStore.fetchAllUsers()
   }
 })
@@ -80,7 +80,7 @@ const deleteUser = async (id: string) => {
 </script>
 
 <template>
-  <div v-if="!authStore.isAdmin" class="notification is-danger mt-6">
+  <div v-if="!authStore.isAdmin && !authStore.isTrainer" class="notification is-danger mt-6">
     You do not have permission to view this page.
   </div>
   
@@ -88,11 +88,11 @@ const deleteUser = async (id: string) => {
     <div class="level mb-4">
       <div class="level-left">
         <div>
-          <h1 class="title">Admin Panel</h1>
-          <p class="subtitle">Manage users and system settings</p>
+          <h1 class="title">{{ authStore.isAdmin ? 'Admin Panel' : 'User Directory' }}</h1>
+          <p class="subtitle">{{ authStore.isAdmin ? 'Manage users and system settings' : 'View all registered users' }}</p>
         </div>
       </div>
-      <div class="level-right">
+      <div class="level-right" v-if="authStore.isAdmin">
         <button class="button is-primary" @click="openAddModal">
           <span class="icon"><i class="fas fa-user-plus"></i></span>
           <span>Add User</span>
@@ -109,7 +109,7 @@ const deleteUser = async (id: string) => {
             <th>Username</th>
             <th>Email</th>
             <th>Role</th>
-            <th>Actions</th>
+            <th v-if="authStore.isAdmin">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -130,7 +130,7 @@ const deleteUser = async (id: string) => {
                 {{ user.role }}
               </span>
             </td>
-            <td>
+            <td v-if="authStore.isAdmin">
               <div class="buttons are-small">
                 <button class="button is-info is-light" @click="openEditModal(user)" title="Edit">
                   <span class="icon"><i class="fas fa-edit"></i></span>
