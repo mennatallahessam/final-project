@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Example Recreation</title>
+    <style>
+        :root {
+            --page-bg: #e8f5e9; /* Light mint green */
+            --menu-bg: #2e7d32; /* Vibrant dark green */
+            --link-color: #0000ee; /* Standard link blue */
+            --link-visited: #551a8b; /* Standard link purple */
+            --border-green: #1b5e20;
+            --border-yellow: #fbc02d;
+            --shadow-color: rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: var(--page-bg);
+            min-height: 100vh;
+            position: relative;
+            /* Vignette effect */
+            box-shadow: inset 0 0 150px var(--shadow-color);
+        }
+
+        .menu-bar {
+            background-color: var(--menu-bg);
+            display: flex;
+            align-items: stretch;
+            padding: 0 15px;
+            height: 40px;
+            box-shadow: 0 2px 5px var(--shadow-color);
+        }
+
+        .menu-item {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .menu-label {
+            padding: 0 15px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: black;
+            font-size: 16px;
+            user-select: none;
+        }
+
+        /* File and View are bold, Edit is not */
+        .bold-label {
+            font-weight: bold;
+        }
+
+        .dropdown-content {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: var(--menu-bg);
+            min-width: 160px;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 4px 8px var(--shadow-color);
+            z-index: 100;
+        }
+
+        .dropdown-content a {
+            padding: 8px 15px;
+            text-decoration: underline;
+            color: var(--link-color);
+            font-size: 14px;
+            background-color: var(--menu-bg);
+        }
+
+        .dropdown-content a:visited {
+            color: var(--link-visited);
+        }
+
+        .dropdown-content a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Hover Behavior for File and View */
+        .hover-menu:hover .dropdown-content {
+            display: flex;
+        }
+
+        /* Click Behavior for Edit (Checkbox Hack) */
+        .menu-toggle {
+            display: none;
+        }
+
+        .menu-toggle:checked ~ .dropdown-content {
+            display: flex;
+        }
+
+        /* Overlay to close the menu when clicking elsewhere */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 50;
+            background: transparent;
+        }
+
+        .menu-toggle:checked ~ .overlay {
+            display: block;
+        }
+
+        /* Content Areas */
+        main {
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .box {
+            background-color: white;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px var(--shadow-color);
+            border-left: 10px solid;
+        }
+
+        .box h2 {
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .box p {
+            line-height: 1.5;
+            color: #333;
+        }
+
+        .instructions {
+            border-left-color: var(--border-green);
+        }
+
+        .extra-credit {
+            border-left-color: var(--border-yellow);
+        }
+
+        /* Ensuring the label is above the overlay when active so clicking it again works */
+        .menu-toggle:checked + .menu-label {
+            position: relative;
+            z-index: 101;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <nav class="menu-bar">
+        <!-- File Menu (Hover) -->
+        <div class="menu-item hover-menu">
+            <span class="menu-label bold-label">File</span>
+            <div class="dropdown-content">
+                <a href="#">New</a>
+                <a href="#">Open</a>
+                <a href="#">Save</a>
+                <a href="#">Print</a>
+                <a href="#">Close</a>
+            </div>
+        </div>
+
+        <!-- Edit Menu (Click - Extra Credit) -->
+        <div class="menu-item click-menu">
+            <input type="checkbox" id="edit-menu-toggle" class="menu-toggle">
+            <label for="edit-menu-toggle" class="menu-label">Edit</label>
+            <div class="dropdown-content">
+                <a href="#">Undo</a>
+                <a href="#">Redo</a>
+                <a href="#">Cut</a>
+                <a href="#">Copy</a>
+                <a href="#">Paste</a>
+                <a href="#">Delete</a>
+                <a href="#">Select All</a>
+            </div>
+            <!-- Overlay is local to the menu-item to stay behind label but above everything else -->
+            <label for="edit-menu-toggle" class="overlay"></label>
+        </div>
+
+        <!-- View Menu (Hover) -->
+        <div class="menu-item hover-menu">
+            <span class="menu-label bold-label">View</span>
+            <div class="dropdown-content">
+                <a href="#">Zoom In</a>
+                <a href="#">Zoom Out</a>
+                <a href="#">Actual Size</a>
+                <a href="#">Fit Page</a>
+                <a href="#">Fit Width</a>
+                <a href="#">Fit Height</a>
+                <a href="#">Rotate Left</a>
+                <a href="#">Rotate Right</a>
+                <a href="#">Full Screen</a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <div class="box instructions">
+            <h2>Instructions</h2>
+            <p>Recreate this page using only CSS. Do yourself a favor and 1) Do not view the source. Figure it out yourself. 2) Do not search for the solution. Learn CSS until you know enough to do this.</p>
+        </div>
+        <div class="box extra-credit">
+            <h2>Extra Credit</h2>
+            <p>Notice how the Edit menu (besides for not being bold) reacts to clicks. If you click the edit menu, it remains open until you click somewhere else. (This you might need to search for)</p>
+        </div>
+    </main>
+</body>
+</html>
