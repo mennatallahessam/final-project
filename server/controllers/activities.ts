@@ -8,9 +8,12 @@ const app = express.Router()
 // GET /api/v1/activities — all activities (admin, trainer)
 app.get('/', restrictTo('admin', 'trainer'), async (req: any, res) => {
   try {
-    const activities = await model.getAll()
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10
+    const offset = req.query.offset ? parseInt(req.query.offset as string) : 0
+    const activities = await model.getAll(limit, offset)
     const enrichedActivities = await Promise.all(activities.map(model.enrich))
-    res.json({ status: 'success', data: enrichedActivities })
+    const total = await model.getTotalCount()
+    res.json({ status: 'success', data: enrichedActivities, total, limit, offset })
   } catch (error: any) {
     res.status(500).json({ status: 'error', message: error.message })
   }
@@ -19,9 +22,12 @@ app.get('/', restrictTo('admin', 'trainer'), async (req: any, res) => {
 // GET /api/v1/activities/me — current user's activities
 app.get('/me', async (req: any, res) => {
   try {
-    const activities = await model.getByUserId(req.user.id)
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10
+    const offset = req.query.offset ? parseInt(req.query.offset as string) : 0
+    const activities = await model.getByUserId(req.user.id, limit, offset)
     const enrichedActivities = await Promise.all(activities.map(model.enrich))
-    res.json({ status: 'success', data: enrichedActivities })
+    const total = await model.getUserTotalCount(req.user.id)
+    res.json({ status: 'success', data: enrichedActivities, total, limit, offset })
   } catch (error: any) {
     res.status(500).json({ status: 'error', message: error.message })
   }
@@ -63,7 +69,7 @@ app.get('/:id', async (req: any, res) => {
 // POST /api/v1/activities
 app.post('/', async (req: any, res) => {
   try {
-    const { exercise_type_id, duration, distance, date, notes } = req.body
+    const { exercise_type_id, duration, distance, date, notes, tagged_friends } = req.body
     if (!exercise_type_id || !duration || !date) {
       return res.status(400).json({ status: 'fail', message: 'exercise_type_id, duration and date are required' })
     }
@@ -78,7 +84,8 @@ app.post('/', async (req: any, res) => {
       distance: distance ? Number(distance) : undefined,
       date,
       calories,
-      notes
+      notes,
+      tagged_friends: Array.isArray(tagged_friends) ? tagged_friends : []
     })
     const enriched = await model.enrich(activity)
     res.status(201).json({ status: 'success', data: enriched })

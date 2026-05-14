@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useActivitiesStore, type Activity } from '@/stores/activities'
 import { useExerciseTypeStore } from '@/stores/exerciseTypes'
 import { confirm } from '@/composables/useDialog'
+import { useInfiniteScroll } from '@vueuse/core'
+import { OAutocomplete } from '@oruga-ui/oruga-next'
 
 const authStore = useAuthStore()
 const activitiesStore = useActivitiesStore()
@@ -11,6 +13,48 @@ const exerciseTypeStore = useExerciseTypeStore()
 
 const isModalActive = ref(false)
 const isEditing = ref(false)
+
+// Infinite Scroll
+const scrollEl = ref<HTMLElement | null>(null)
+useInfiniteScroll(
+  scrollEl,
+  () => {
+    if (activitiesStore.hasMore && !activitiesStore.loading) {
+      activitiesStore.fetchMyActivities(false)
+    }
+  },
+  { distance: 10 }
+)
+
+// Autocomplete for Tagging Friends
+const friendQuery = ref('')
+const friendSuggestions = ref<any[]>([])
+const isSearchingFriends = ref(false)
+const selectedFriends = ref<any[]>([])
+
+const searchFriends = async (query: string) => {
+  if (!query) {
+    friendSuggestions.value = []
+    return
+  }
+  isSearchingFriends.value = true
+  try {
+    friendSuggestions.value = await activitiesStore.searchUsers(query)
+  } finally {
+    isSearchingFriends.value = false
+  }
+}
+
+const addFriendTag = (friend: any) => {
+  if (friend && !selectedFriends.value.find(f => f.id === friend.id)) {
+    selectedFriends.value.push(friend)
+    friendQuery.value = ''
+  }
+}
+
+const removeFriendTag = (friendId: string) => {
+  selectedFriends.value = selectedFriends.value.filter(f => f.id !== friendId)
+}
 
 const emptyForm = {
   exerciseTypeId: '',
@@ -24,17 +68,22 @@ const emptyForm = {
 const form = ref({ ...emptyForm })
 const editingId = ref<string | null>(null)
 
-const userActivities = computed(() => {
-  return activitiesStore.activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-})
+const userActivities = computed(() => activitiesStore.activities)
 
 onMounted(async () => {
-  await activitiesStore.fetchMyActivities()
-  await exerciseTypeStore.fetchAllExerciseTypes()
+  try {
+    await Promise.all([
+      activitiesStore.fetchMyActivities(true),
+      exerciseTypeStore.fetchAllExerciseTypes()
+    ])
+  } catch (error) {
+    console.error('Error loading data:', error)
+  }
 })
 
 const openAddModal = () => {
   form.value = { ...emptyForm }
+  selectedFriends.value = []
   isEditing.value = false
   editingId.value = null
   isModalActive.value = true
@@ -49,6 +98,7 @@ const openEditModal = (activity: Activity) => {
     calories: activity.calories,
     notes: activity.notes || ''
   }
+  selectedFriends.value = (activity as any).taggedFriends || []
   isEditing.value = true
   editingId.value = activity.id
   isModalActive.value = true
@@ -59,28 +109,36 @@ const closeModal = () => {
 }
 
 const saveActivity = async () => {
-  if (!authStore.currentUser) return
-
-  const payload: any = {
-    exercise_type_id: form.value.exerciseTypeId,
-    duration: form.value.duration,
-    distance: form.value.distance || undefined,
-    date: form.value.date || new Date().toISOString().split('T')[0],
-    notes: form.value.notes || undefined
+  if (!authStore.currentUser) {
+    alert("You must be logged in to save an activity.")
+    return
   }
 
-  if (isEditing.value && editingId.value) {
-    await activitiesStore.updateActivity(editingId.value, payload)
-  } else {
-    await activitiesStore.addActivity(payload)
+  try {
+    const payload: any = {
+      exercise_type_id: form.value.exerciseTypeId,
+      duration: form.value.duration,
+      distance: form.value.distance || undefined,
+      date: form.value.date || new Date().toISOString().split('T')[0],
+      notes: form.value.notes || undefined,
+      tagged_friends: selectedFriends.value.map(f => f.id)
+    }
+
+    if (isEditing.value && editingId.value) {
+      await activitiesStore.updateActivity(editingId.value, payload)
+    } else {
+      await activitiesStore.addActivity(payload)
+    }
+    closeModal()
+  } catch (error: any) {
+    console.error("Save error:", error)
+    alert(error.message || "Failed to save activity. Please try again.")
   }
-  closeModal()
 }
 
 const deleteActivity = async (id: string) => {
   if (await confirm('Delete Activity', 'Are you sure you want to delete this activity?')) {
     await activitiesStore.deleteActivity(id)
-    await activitiesStore.fetchMyActivities()
   }
 }
 </script>
@@ -92,6 +150,9 @@ const deleteActivity = async (id: string) => {
         <div>
           <h1 class="title">Activities</h1>
           <p class="subtitle">Manage your fitness activities</p>
+          <p class="is-size-7 has-text-grey" v-if="activitiesStore.totalCount > 0">
+            Showing {{ activitiesStore.activities.length }} of {{ activitiesStore.totalCount }} activities
+          </p>
         </div>
       </div>
       <div class="level-right">
@@ -102,32 +163,39 @@ const deleteActivity = async (id: string) => {
       </div>
     </div>
 
-    <div class="table-container">
+    <div class="scroll-container" ref="scrollEl">
       <table class="table is-fullwidth is-hoverable is-striped">
         <thead>
           <tr>
             <th>Date</th>
             <th>Type</th>
-            <th>Duration (min)</th>
+            <th>Duration</th>
             <th>Distance</th>
             <th>Calories</th>
-            <th>Notes</th>
+            <th>Tagged Friends</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-if="userActivities.length === 0">
+          <tr v-if="userActivities.length === 0 && !activitiesStore.loading">
             <td colspan="7" class="has-text-centered py-5">No activities found. Start tracking!</td>
           </tr>
           <tr v-for="activity in userActivities" :key="activity.id">
-            <td>{{ new Date(activity.date).toLocaleDateString() }}</td>
+            <td>{{ activity.date ? new Date(activity.date).toLocaleDateString() : 'No Date' }}</td>
             <td>
-              <span class="tag is-info is-light">{{ (activity as any).exerciseType?.name || activity.exerciseTypeId }}</span>
+              <span class="tag is-info is-light">{{ (activity as any).exerciseType?.name || 'Activity' }}</span>
             </td>
-            <td>{{ activity.duration }}</td>
+            <td>{{ activity.duration }} min</td>
             <td>{{ activity.distance ? activity.distance + ' km' : '-' }}</td>
             <td>{{ activity.calories }} kcal</td>
-            <td>{{ activity.notes || '-' }}</td>
+            <td>
+              <div class="tags">
+                <span v-for="friend in (activity as any).taggedFriends" :key="friend.id" class="tag is-rounded is-light">
+                  @{{ friend.username }}
+                </span>
+                <span v-if="!(activity as any).taggedFriends?.length" class="has-text-grey-light">-</span>
+              </div>
+            </td>
             <td>
               <div class="buttons are-small">
                 <button class="button is-info is-light" @click="openEditModal(activity)" title="Edit">
@@ -139,8 +207,25 @@ const deleteActivity = async (id: string) => {
               </div>
             </td>
           </tr>
+          
+          <!-- Loading Skeletons -->
+          <template v-if="activitiesStore.loading">
+            <tr v-for="i in 3" :key="'skeleton-' + i">
+              <td><div class="skeleton-block" style="width: 80px; height: 1.5rem;"></div></td>
+              <td><div class="skeleton-block" style="width: 100px; height: 1.5rem;"></div></td>
+              <td><div class="skeleton-block" style="width: 60px; height: 1.5rem;"></div></td>
+              <td><div class="skeleton-block" style="width: 60px; height: 1.5rem;"></div></td>
+              <td><div class="skeleton-block" style="width: 70px; height: 1.5rem;"></div></td>
+              <td><div class="skeleton-block" style="width: 120px; height: 1.5rem;"></div></td>
+              <td><div class="skeleton-block" style="width: 80px; height: 1.5rem;"></div></td>
+            </tr>
+          </template>
         </tbody>
       </table>
+      
+      <div v-if="!activitiesStore.hasMore && userActivities.length > 0" class="has-text-centered py-4 has-text-grey-light">
+        No more activities to load.
+      </div>
     </div>
 
     <!-- Modal Form -->
@@ -189,13 +274,44 @@ const deleteActivity = async (id: string) => {
               </div>
             </div>
           </div>
+
+          <!-- Tag Friends Autocomplete -->
           <div class="field">
-            <p class="help is-info" v-if="!isEditing">Calories will be calculated automatically based on activity type and duration.</p>
-            <label class="label" v-if="isEditing">Calories Burned (Override)</label>
-            <div class="control" v-if="isEditing">
-              <input class="input" type="number" min="0" v-model.number="form.calories" />
+            <label class="label">Tag Friends</label>
+            <div class="control">
+              <o-autocomplete
+                v-model="friendQuery"
+                :data="friendSuggestions"
+                placeholder="Search for friends to tag..."
+                field="username"
+                :loading="isSearchingFriends"
+                @typing="searchFriends"
+                @select="addFriendTag"
+                expanded
+              >
+                <template #default="{ option }">
+                  <div class="media" v-if="option">
+                    <div class="media-left">
+                      <figure class="image is-24x24">
+                        <img :src="option.avatar" class="is-rounded" />
+                      </figure>
+                    </div>
+                    <div class="media-content">
+                      {{ option.full_name }} (@{{ option.username }})
+                    </div>
+                  </div>
+                </template>
+                <template #empty>No results found for "{{ friendQuery }}"</template>
+              </o-autocomplete>
+            </div>
+            <div class="tags mt-2">
+              <span v-for="friend in selectedFriends" :key="friend.id" class="tag is-primary is-light">
+                @{{ friend.username }}
+                <button class="delete is-small" @click="removeFriendTag(friend.id)"></button>
+              </span>
             </div>
           </div>
+
           <div class="field">
             <label class="label">Notes</label>
             <div class="control">
@@ -213,7 +329,23 @@ const deleteActivity = async (id: string) => {
 </template>
 
 <style scoped>
+.scroll-container {
+  max-height: 600px;
+  overflow-y: auto;
+}
 .py-5 { padding-top: 2rem; padding-bottom: 2rem; }
 .mb-4 { margin-bottom: 1.5rem; }
-.mt-6 { margin-top: 3rem; }
+
+/* Skeleton animation */
+.skeleton-block {
+  background: linear-gradient(90deg, #f2f2f2 25%, #e6e6e6 50%, #f2f2f2 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
 </style>

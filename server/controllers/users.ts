@@ -21,6 +21,23 @@ app.get('/me', (req: any, res) => {
   res.json({ status: 'success', data: req.user })
 })
 
+// GET /api/v1/users/search
+app.get('/search', async (req, res) => {
+  try {
+    const query = req.query.q as string
+    if (!query) return res.json({ status: 'success', data: [] })
+    const users = await model.search(query)
+    // Filter out password and other sensitive info
+    const safeUsers = users.map(u => {
+      const { password, ...safe } = u
+      return safe
+    })
+    res.json({ status: 'success', data: safeUsers })
+  } catch (error: any) {
+    res.status(500).json({ status: 'error', message: error.message })
+  }
+})
+
 // GET /api/v1/users/:id
 app.get('/:id', async (req, res) => {
   try {

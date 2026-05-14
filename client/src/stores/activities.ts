@@ -18,6 +18,9 @@ export interface Activity {
 export const useActivitiesStore = defineStore('activities', () => {
   const activities = ref<Activity[]>([])
   const loading = ref(false)
+  const totalCount = ref(0)
+  const currentOffset = ref(0)
+  const hasMore = ref(true)
 
   // ── Time-filtered getters (Extra Credit Statistics) ──────────────────────
   const todayActivities = computed(() => {
@@ -42,11 +45,27 @@ export const useActivitiesStore = defineStore('activities', () => {
     return activities.value
   })
 
-  async function fetchMyActivities() {
+  async function fetchMyActivities(isInitial = true, limit = 10) {
+    if (loading.value) return
     loading.value = true
+    
+    if (isInitial) {
+      currentOffset.value = 0
+      activities.value = []
+      hasMore.value = true
+    }
+
     try {
-      const response = await apiFetch<ApiResponse<Activity[]>>('/activities/me')
-      activities.value = response.data || []
+      const response = await apiFetch<ApiResponse<Activity[]> & { total: number }>(
+        `/activities/me?limit=${limit}&offset=${currentOffset.value}`
+      )
+      
+      const newActivities = response.data || []
+      activities.value = isInitial ? newActivities : [...activities.value, ...newActivities]
+      totalCount.value = response.total || 0
+      
+      currentOffset.value += newActivities.length
+      hasMore.value = activities.value.length < totalCount.value
     } finally {
       loading.value = false
     }
@@ -64,6 +83,7 @@ export const useActivitiesStore = defineStore('activities', () => {
     })
     if (response.data) {
       activities.value.push(response.data)
+      totalCount.value++
     }
   }
 
@@ -81,16 +101,25 @@ export const useActivitiesStore = defineStore('activities', () => {
   async function deleteActivity(id: string) {
     await apiFetch(`/activities/${id}`, { method: 'DELETE' })
     activities.value = activities.value.filter(a => a.id !== id)
+    totalCount.value--
+  }
+
+  async function searchUsers(query: string) {
+    const response = await apiFetch<ApiResponse<any[]>>(`/users/search?q=${query}`)
+    return response.data || []
   }
 
   return {
     activities,
     loading,
+    totalCount,
+    hasMore,
     todayActivities,
     thisWeekActivities,
     allTimeActivities,
     fetchMyActivities,
     fetchUserActivities,
+    searchUsers,
     addActivity,
     updateActivity,
     deleteActivity

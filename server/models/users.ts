@@ -18,6 +18,16 @@ export async function getAll(): Promise<UserRecord[]> {
   return data.map(toCamelCase) as UserRecord[]
 }
 
+export async function search(query: string): Promise<UserRecord[]> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .or(`username.ilike.%${query}%,full_name.ilike.%${query}%`)
+    .limit(10)
+  if (error) throw error
+  return data.map(toCamelCase) as UserRecord[]
+}
+
 export async function getById(id: string): Promise<UserRecord | undefined> {
   const { data, error } = await supabase.from('users').select('*').eq('id', id).single()
   if (error && error.code !== 'PGRST116') throw error
@@ -81,7 +91,6 @@ export async function enrichUser(user: UserRecord) {
 
 export async function seed() {
   const bcrypt = await import('bcryptjs')
-  
   const seedUsers = [
     {
       username: 'menna',
@@ -115,8 +124,6 @@ export async function seed() {
       const hashedPassword = await bcrypt.default.hash(user.password, 10)
       await create({ ...user, password: hashedPassword } as any)
       console.log(`Created user: ${user.username}`)
-    } else {
-      console.log(`User ${user.username} already exists, skipping...`)
     }
   }
 }
